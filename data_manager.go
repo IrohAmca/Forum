@@ -12,7 +12,7 @@ var database *sql.DB
 func createDatabase() {
 	database, _ = sql.Open("sqlite3", "./database.db")
 
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, name TEXT, lastname TEXT)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, email TEXT, password TEXT)")
 	statement.Exec()
 }
 
@@ -25,14 +25,14 @@ func Query(id int) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var name string
-		var lastname string
-		err := rows.Scan(&id,&name, &lastname)
+		var email string
+		var password string
+		err := rows.Scan(&id,&email, &password)
 		if err != nil {
 			fmt.Println("Error scanning row:", err)
 			return
 		}
-		fmt.Println(id,name, lastname)
+		fmt.Println(id,email, password)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -42,15 +42,15 @@ func Query(id int) {
 }
 
 
-func insertData(id int, name, lastname string) {
-	statement, err := database.Prepare("INSERT OR IGNORE INTO people (id, name, lastname) VALUES (?, ?, ?)")
+func insertData(id int, email, password string) {
+	statement, err := database.Prepare("INSERT OR IGNORE INTO people (id, email, password) VALUES (?, ?, ?)")
 	if err != nil {
 		fmt.Println("Error preparing statement:", err)
 		return
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(id, name, lastname)
+	_, err = statement.Exec(id, email, password)
 	if err != nil {
 		fmt.Println("Error executing statement:", err)
 		return
@@ -59,7 +59,7 @@ func insertData(id int, name, lastname string) {
 	fmt.Println("Data inserted successfully.")
 }
 
-func deleteData(data string) {
-	statement, _ := database.Prepare("DELETE FROM people WHERE name = ?")
-	statement.Exec(data)
+func deleteData(id int) {
+	statement, _ := database.Prepare("DELETE FROM people WHERE id = ?")
+	statement.Exec(id)
 }
