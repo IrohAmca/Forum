@@ -6,7 +6,7 @@ func main() {
 	// Assume these functions are defined elsewhere
 	createDatabase()
 	deleteData(1)
-	insertData(1, "sebo@gmail.com", "got123")
+	insertData(1, "sebo@gmail.com", "imdat123")
 	Query(1)
 
 	r := gin.Default()
