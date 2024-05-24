@@ -16,33 +16,21 @@ func createDatabase() {
 	statement.Exec()
 }
 
-func Query(id int) {
-	rows, err := database.Query("SELECT * FROM people WHERE id = ?", id)
+func Query(id int) (string, string, error) {
+	var email, password string
+	row := database.QueryRow("SELECT email, password FROM people WHERE id = ?", id)
+	err := row.Scan(&email, &password)
 	if err != nil {
-		fmt.Println("Error executing query:", err)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var email string
-		var password string
-		err := rows.Scan(&id,&email, &password)
-		if err != nil {
-			fmt.Println("Error scanning row:", err)
-			return
+		if err == sql.ErrNoRows {
+			return "", "", fmt.Errorf("no user with id %d", id)
 		}
-		fmt.Println(id,email, password)
+		return "", "", fmt.Errorf("error scanning row: %v", err)
 	}
-
-	if err := rows.Err(); err != nil {
-		fmt.Println("Error iterating over rows:", err)
-		return
-	}
+	return email, password, nil
 }
 
-
 func insertData(id int, email, password string) {
+	hashedPassword := hashPassword(password)
 	statement, err := database.Prepare("INSERT OR IGNORE INTO people (id, email, password) VALUES (?, ?, ?)")
 	if err != nil {
 		fmt.Println("Error preparing statement:", err)
@@ -50,7 +38,7 @@ func insertData(id int, email, password string) {
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(id, email, password)
+	_, err = statement.Exec(id, email, hashedPassword)
 	if err != nil {
 		fmt.Println("Error executing statement:", err)
 		return
