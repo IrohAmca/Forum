@@ -29,8 +29,7 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	userID := 0
-	emailReal, passwordReal, err := Query(userID)
+	emailReal, passwordReal, err := Query_email(loginInput.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

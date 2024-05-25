@@ -15,7 +15,7 @@ type User struct {
 	ConfirmPassword string
 }
 
-func checkSignUp(c *gin.Context) {
+func SignUp(c *gin.Context) {
 	fmt.Println("Sign up request received")
 	var loginInput struct {
 		Email           string `form:"email" binding:"required"`

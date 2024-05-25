@@ -4,7 +4,7 @@ import "github.com/gin-gonic/gin"
 
 func main() {
 	createDatabase()
-	//WriteAllData()
+	listUsers()
 	r := gin.Default()
 
 	r.Static("/static", "./index.html")
@@ -12,7 +12,7 @@ func main() {
 	r.GET("/sign-up", func(c *gin.Context) {
 		c.File("./sign-up.html")
 	})
-	r.POST("/sign-up", checkSignUp)
+	r.POST("/sign-up", SignUp)
 
 	r.GET("/login", func(c *gin.Context) {
 		c.File("./login.html")

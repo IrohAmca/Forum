@@ -16,7 +16,18 @@ func createDatabase() {
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, email TEXT, password TEXT, age INTEGER)")
 	statement.Exec()
 }
-
+func Query_email(email string) (string, string, error) {
+	var email_, password string
+	row := database.QueryRow("SELECT email, password FROM people WHERE email = ?", email)
+	err := row.Scan(&email_, &password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", fmt.Errorf("no user with email %s", email)
+		}
+		return "", "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return email_, password, nil
+}
 func Query(id int) (string, string, error) {
 	var email, password string
 	row := database.QueryRow("SELECT email, password FROM people WHERE id = ?", id)
