@@ -3,11 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var userID = 1
+var userID int
 var database *sql.DB
 
 func createDatabase() {
@@ -16,6 +15,27 @@ func createDatabase() {
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, email TEXT, password TEXT, age INTEGER)")
 	statement.Exec()
 }
+
+func updateUserID() {
+	rows, err := database.Query("SELECT MAX(id) FROM people")
+	if err != nil {
+		fmt.Println("Error querying data:", err)
+		return
+	}
+	defer rows.Close()
+
+	var maxID int
+	if rows.Next() {
+		err := rows.Scan(&maxID)
+		if err != nil {
+			fmt.Println("Error scanning row:", err)
+			return
+		}
+	}
+
+	userID = maxID + 1
+}
+
 func Query_email(email string) (string, string, error) {
 	var email_, password string
 	row := database.QueryRow("SELECT email, password FROM people WHERE email = ?", email)
@@ -28,6 +48,7 @@ func Query_email(email string) (string, string, error) {
 	}
 	return email_, password, nil
 }
+
 func Query(id int) (string, string, error) {
 	var email, password string
 	row := database.QueryRow("SELECT email, password FROM people WHERE id = ?", id)
@@ -58,6 +79,7 @@ func insertData(id int, email, password string, age int) {
 
 	fmt.Println("Data inserted successfully.")
 }
+
 func WriteAllData() {
 	rows, err := database.Query("SELECT id, email, password, age FROM people")
 	if err != nil {

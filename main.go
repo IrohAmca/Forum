@@ -1,9 +1,12 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 	createDatabase()
+	WriteAllData()
 	r := gin.Default()
 
 	r.Static("/static", "./index.html")
@@ -15,7 +18,7 @@ func main() {
 	r.GET("/login", func(c *gin.Context) {
 		c.File("./login.html")
 	})
-	
+
 	r.GET("/", func(c *gin.Context) {
 		c.File("./index.html")
 	})
