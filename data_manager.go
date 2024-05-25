@@ -7,6 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var userID = 0
 var database *sql.DB
 
 func createDatabase() {
@@ -50,4 +51,16 @@ func insertData(id int, email, password string) {
 func deleteData(id int) {
 	statement, _ := database.Prepare("DELETE FROM people WHERE id = ?")
 	statement.Exec(id)
+}
+
+func signIn(email, password string) {
+	userID++
+	row := database.QueryRow("SELECT id FROM people WHERE email = ? AND password = ?", email, hashPassword(password))
+	err := row.Scan(&userID)
+	if err != nil {
+		fmt.Println("Error signing in:", err)
+		return
+	}
+	fmt.Println("Sign in successful.")
+	insertData(userID, email, password)
 }

@@ -17,7 +17,7 @@ func hashPassword(password string) string {
 	return string(hashedPassword)
 }
 
-// Login function to authenticate users
+
 
 func login(c *gin.Context) {
 	var loginInput struct {
@@ -30,15 +30,12 @@ func login(c *gin.Context) {
 		return
 	}
 
-	// Assuming we get the user ID from the input or session, here just as an example we use 1
-	userID := 1
 	emailReal, passwordReal, err := Query(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Authenticate user
 	err = authenticate(emailReal, passwordReal, loginInput.Email, loginInput.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -49,10 +46,6 @@ func login(c *gin.Context) {
 }
 
 func authenticate(storedEmail, storedPassword, inputEmail, inputPassword string) error {
-	fmt.Println("Stored email:", storedEmail)
-	fmt.Println("Stored hashed password:", storedPassword)
-	fmt.Println("Input email:", inputEmail)
-	fmt.Println("Input password:", inputPassword)
 
 	if storedEmail != inputEmail {
 		fmt.Println("Email does not match")

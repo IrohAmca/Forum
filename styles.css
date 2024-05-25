@@ -78,3 +78,20 @@ button {
 button:hover {
     background: #555;
 }
+
+p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.sign-in-button {
+    color: #333;
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
+.sign-in-button:hover {
+    color: #007BFF;
+}

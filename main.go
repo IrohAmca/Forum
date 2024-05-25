@@ -5,14 +5,16 @@ import "github.com/gin-gonic/gin"
 func main() {
 	// Assume these functions are defined elsewhere
 	createDatabase()
-	deleteData(1)
-	insertData(1, "sebo@gmail.com", "imdat123")
-	Query(1)
 
 	r := gin.Default()
 
 	// Serve static files
 	r.Static("/static", "./")
+
+	// Serve the sign-in page
+	r.GET("/sign-in.html", func(c *gin.Context) {
+		c.File("./sign-in.html")
+	})
 
 	// Serve the login page
 	r.GET("/login", func(c *gin.Context) {
