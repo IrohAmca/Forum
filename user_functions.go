@@ -51,32 +51,6 @@ func authenticate(storedPassword, inputPassword string) error {
 	}
 	return nil
 }
-
-func listUsers() {
-	rows, err := database.Query("SELECT id, email, password FROM people")
-	if err != nil {
-		fmt.Println("Error querying database:", err)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int
-		var email, password string
-		err := rows.Scan(&id, &email, &password)
-		if err != nil {
-			fmt.Println("Error scanning row:", err)
-			return
-		}
-		fmt.Printf("ID: %d, Email: %s, Password: %s\n", id, email, password)
-	}
-
-	if err := rows.Err(); err != nil {
-		fmt.Println("Error iterating over rows:", err)
-		return
-	}
-}
-
 func SignUp(c *gin.Context) {
 	var user struct {
 		Email           string `form:"email" binding:"required"`
