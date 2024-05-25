@@ -3,25 +3,25 @@ package main
 import "github.com/gin-gonic/gin"
 
 func main() {
-	// Assume these functions are defined elsewhere
 	createDatabase()
-
+	//WriteAllData()
 	r := gin.Default()
 
-	// Serve static files
-	r.Static("/static", "./")
+	r.Static("/static", "./index.html")
 
-	// Serve the sign-in page
-	r.GET("/sign-in.html", func(c *gin.Context) {
-		c.File("./sign-in.html")
+	r.GET("/sign-up", func(c *gin.Context) {
+		c.File("./sign-up.html")
 	})
+	r.POST("/sign-up", checkSignUp)
 
-	// Serve the login page
 	r.GET("/login", func(c *gin.Context) {
 		c.File("./login.html")
 	})
+	
+	r.GET("/", func(c *gin.Context) {
+		c.File("./index.html")
+	})
 
-	// Handle the login form submission
 	r.POST("/login", login)
 
 	r.Run("localhost:8080")

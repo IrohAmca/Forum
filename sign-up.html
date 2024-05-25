@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,25 +16,30 @@
             height: 100vh;
             margin: 0;
         }
+
         .container {
             background: #fff;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .signup-box {
             max-width: 400px;
             margin: auto;
             text-align: center;
         }
+
         .signup-box h2 {
             margin-bottom: 20px;
             color: #333;
         }
+
         .input-group {
             position: relative;
             margin-bottom: 30px;
         }
+
         .input-group input {
             width: 100%;
             padding: 10px;
@@ -43,10 +49,12 @@
             outline: none;
             transition: background 0.3s, border-color 0.3s;
         }
+
         .input-group input:focus {
             background: #fff;
             border-color: #9b59b6;
         }
+
         .input-group label {
             position: absolute;
             left: 10px;
@@ -56,13 +64,15 @@
             pointer-events: none;
             transition: top 0.3s, left 0.3s, font-size 0.3s, color 0.3s;
         }
-        .input-group input:focus + label,
-        .input-group input:not(:placeholder-shown) + label {
+
+        .input-group input:focus+label,
+        .input-group input:not(:placeholder-shown)+label {
             top: -10px;
             left: 10px;
             font-size: 12px;
             color: #9b59b6;
         }
+
         button {
             padding: 10px 20px;
             background: #9b59b6;
@@ -73,35 +83,40 @@
             cursor: pointer;
             transition: background 0.3s;
         }
+
         button:hover {
             background: #8e44ad;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="signup-box">
             <h2>IMDAT (SIGN UP)</h2>
-            <form action="/login" method="POST">
-                <div class="input-group">
-                    <input type="email" name="email" required>
-                    <label>Email</label>
-                </div>
-                <div class="input-group">
-                    <input type="number" name="age" required>
-                    <label>Age</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" name="password" required>
-                    <label>Password</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" name="confirm_password" required>
-                    <label>Confirm Password</label>
-                </div>
-                <button type="submit">Sign Up</button>
+            <form action="/sign-up" method="POST"></form>
+            <div class="input-group">
+                <input type="email" name="email" required>
+                <label>Email</label>
+            </div>
+            <div class="input-group">
+                <input type="number" name="age" required>
+                <label>Age</label>
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" required>
+                <label>Password</label>
+            </div>
+            <div class="input-group">
+                <input type="password" name="confirm_password" required>
+                <label>Confirm Password</label>
+            </div>
+            <button type="submit">
+                <a href="/">Sign up</a>
+            </button>
             </form>
         </div>
     </div>
 </body>
+
 </html>
