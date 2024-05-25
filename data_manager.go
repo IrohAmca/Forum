@@ -77,7 +77,9 @@ func WriteAllData() {
 		fmt.Printf("ID: %d, Email: %s, Password: %s, Age: %d\n", id, email, password, age)
 	}
 }
+
+/*
 func deleteData(id int) {
 	statement, _ := database.Prepare("DELETE FROM people WHERE id = ?")
 	statement.Exec(id)
-}
+}*/

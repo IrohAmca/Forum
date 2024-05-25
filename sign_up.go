@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,6 @@ type User struct {
 }
 
 func SignUp(c *gin.Context) {
-	fmt.Println("Sign up request received")
 	var loginInput struct {
 		Email           string `form:"email" binding:"required"`
 		Password        string `form:"password" binding:"required"`
