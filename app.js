@@ -58,81 +58,82 @@ document.getElementById('signUpForm').addEventListener('submit', function(event)
 
 
 
+//forum kısmı -- comment, like- dislike
 
 
-document.addEventListener('DOMContentLoaded', function() {
-  const postContainer = document.getElementById('postContainer');
-  const newPostForm = document.getElementById('newPostForm');
-
-  newPostForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const postContent = document.getElementById('postContent').value;
-    addPost(postContent);
-    newPostForm.reset();
-  });
-
-  function addPost(content) {
-    const postId = Date.now();
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-    postDiv.id = `post-${postId}`;
-    postDiv.innerHTML = `
-      <button class="delete-btn" onclick="deletePost(${postId})">&times;</button>
-      <p>${content}</p>
-      <div class="buttons">
-        <button class="btn btn-success" onclick="likePost(${postId})">Like <span id="like-count-${postId}">0</span></button>
-        <button class="btn btn-danger" onclick="dislikePost(${postId})">Dislike <span id="dislike-count-${postId}">0</span></button>
-        <button class="btn btn-secondary" onclick="toggleCommentForm(${postId})">Comment</button>
-      </div>
-      <div id="comments-${postId}" class="mt-3"></div>
-      <div id="commentForm-${postId}" class="comment-form" style="display: none;">
-        <textarea class="form-control" rows="2" placeholder="Write a comment..." id="commentContent-${postId}"></textarea>
-        <button class="btn btn-primary mt-2" onclick="addComment(${postId})">Add Comment</button>
-      </div>
-    `;
-    postContainer.appendChild(postDiv);
+document.addEventListener('DOMContentLoaded', function () {
+  function updateCount(button, countClass, increment) {
+    var countElement = button.querySelector(countClass);
+    var count = parseInt(countElement.textContent);
+    countElement.textContent = count + increment;
   }
 
-  window.toggleCommentForm = function(postId) {
-    const commentForm = document.getElementById(`commentForm-${postId}`);
-    if (commentForm.style.display === 'none') {
-      commentForm.style.display = 'block';
-    } else {
-      commentForm.style.display = 'none';
-    }
-  }
+  window.likePost = function (button) {
+    updateCount(button, '.like-count', 1);
+  };
 
-  window.addComment = function(postId) {
-    const commentContent = document.getElementById(`commentContent-${postId}`).value;
-    const commentsDiv = document.getElementById(`comments-${postId}`);
-    const commentDiv = document.createElement('div');
-    commentDiv.className = 'comment';
-    commentDiv.innerHTML = `
-      <button class="delete-btn" onclick="deleteComment(${postId}, this)">&times;</button>
-      <p>${commentContent}</p>
-    `;
-    commentsDiv.appendChild(commentDiv);
-    document.getElementById(`commentForm-${postId}`).style.display = 'none';
-    document.getElementById(`commentContent-${postId}`).value = ''; // Clear comment textarea
-  }
+  window.dislikePost = function (button) {
+    updateCount(button, '.dislike-count', 1);
+  };
 
-  window.likePost = function(postId) {
-    const likeCount = document.getElementById(`like-count-${postId}`);
-    likeCount.textContent = parseInt(likeCount.textContent) + 1;
-  }
+  window.replyPost = function (button) {
+    var replyForm = button.closest('.post').querySelector('.reply-form');
+    replyForm.style.display = 'block';
+  };
 
-  window.dislikePost = function(postId) {
-    const dislikeCount = document.getElementById(`dislike-count-${postId}`);
-    dislikeCount.textContent = parseInt(dislikeCount.textContent) + 1;
-  }
+  window.submitComment = function (button) {
+    var replyForm = button.closest('.reply-form');
+    var commentText = replyForm.querySelector('input').value;
+    var newComment = document.createElement('div');
+    newComment.classList.add('comment');
+    newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
+    replyForm.insertAdjacentElement('afterend', newComment);
+    replyForm.style.display = 'none';
+  };
 
-  window.deletePost = function(postId) {
-    const postDiv = document.getElementById(`post-${postId}`);
-    postDiv.remove();
-  }
+  window.likeComment = function (button) {
+    updateCount(button, '.like-count', 1);
+  };
 
-  window.deleteComment = function(postId, commentElement) {
-    const commentDiv = commentElement.parentElement;
-    commentDiv.remove();
-  }
+  window.dislikeComment = function (button) {
+    updateCount(button, '.dislike-count', 1);
+  };
+
+  window.replyComment = function (button) {
+    var comment = button.closest('.comment');
+    var replyForm = comment.querySelector('.reply-form');
+    replyForm.style.display = 'block';
+  };
+
+  window.submitReply = function (button) {
+    var replyForm = button.closest('.reply-form');
+    var replyText = replyForm.querySelector('input').value;
+    var newReply = document.createElement('div');
+    newReply.classList.add('comment');
+    newReply.innerHTML = '<p>' + replyText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
+    replyForm.insertAdjacentElement('afterend', newReply);
+    replyForm.style.display = 'none';
+  };
+
+  window.deletePost = function (button) {
+    var post = button.closest('.post');
+    post.remove();
+  };
+
+  window.deleteComment = function (button) {
+    var comment = button.closest('.comment');
+    comment.remove();
+  };
+
+  window.createPost = function () {
+    var title = document.getElementById('new-post-title').value;
+    var content = document.getElementById('new-post-content').value;
+
+    var newPost = document.createElement('article');
+    newPost.classList.add('post');
+    newPost.innerHTML = '<h2 class="blog-post-title">' + title + '</h2><p class="blog-post-meta">January 1, 2021 by <a href="#">Mark</a></p><p>' + content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+
+    var postList = document.querySelector('.post-list');
+    postList.prepend(newPost);
+  };
 });
