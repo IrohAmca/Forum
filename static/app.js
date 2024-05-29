@@ -1,24 +1,35 @@
-document.getElementById('loginForm').addEventListener('submit', function(event) {
-  event.preventDefault(); // Formun varsayılan davranışını engelle
-  var email = document.getElementById('email').value;
-  var password = document.getElementById('password').value;
-  console.log('Giriş yapıldı:', email, password);
-  // Giriş işlemleri burada yapılacak
-  $('#signInModal').modal('hide'); // Modalı kapat
-  // Kullanıcı içeriği göster ve oturum açma düğmesini gizle
-  document.getElementById('content').style.display = 'none';
-  document.getElementById('user-content').style.display = 'block';
-  document.getElementById('user-email').textContent = email;
+document.getElementById('loginForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  fetch('/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email: email, password: password })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        $('#signInModal').modal('hide');
+        alert(data.message);
+      } else {
+        alert('Error logging in user: ' + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
 });
 
-document.getElementById('signUpForm').addEventListener('submit', function(event) {
-  event.preventDefault(); // Formun varsayılan submit davranışını engelle
+document.getElementById('signUpForm').addEventListener('submit', function (event) {
+  event.preventDefault();
 
-  const name = document.getElementById('name').value;
+  const username = document.getElementById('signUpUsername').value;
   const email = document.getElementById('signUpEmail').value;
   const password = document.getElementById('signUpPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  const passwordHelp = document.getElementById('passwordHelp');
+  const confirmPassword = document.getElementById('confirmSignUpPassword').value;
+  const passwordHelp = document.getElementById('passwordHelpBlock');
 
   if (password !== confirmPassword) {
     passwordHelp.textContent = 'Passwords do not match.';
@@ -28,32 +39,30 @@ document.getElementById('signUpForm').addEventListener('submit', function(event)
     passwordHelp.textContent = '';
   }
 
-  fetch('/signup', {
+
+  fetch('/sign-up', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ name: name, email: email, password: password })
+    body: JSON.stringify({ username: username, email: email, password: password })
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      $('#signUpModal').modal('hide'); // Modal'ı kapat
-      alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
-    } else {
-      alert('Kayıt başarısız: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-  });
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      if (data.success) {
+        $('#signUpModal').modal('hide');
+        alert(data.message);
+      } else {
+        alert("Error signing up user: " + data.error);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+
 });
 
 
-
 //forum kısmı -- comment, like- dislike
-
 
 document.addEventListener('DOMContentLoaded', function () {
   function updateCount(button, countClass, increment) {
@@ -131,15 +140,15 @@ document.addEventListener('DOMContentLoaded', function () {
     postList.prepend(newPost);
   };
 });
-document.getElementById('addPostButton').addEventListener('click', function() {
+document.getElementById('addPostButton').addEventListener('click', function () {
   addNewPost();
 });
 
 
 // filter
 
- // Filtreleme Fonksiyonu
- document.addEventListener('DOMContentLoaded', function () {
+// Filtreleme Fonksiyonu
+document.addEventListener('DOMContentLoaded', function () {
   // Kategori filtrelerini işle
   var categoryFilters = document.querySelectorAll('.category-filter');
   categoryFilters.forEach(function (filter) {
@@ -169,60 +178,60 @@ document.getElementById('addPostButton').addEventListener('click', function() {
 document.addEventListener('DOMContentLoaded', function () {
   // Handle sign-in form submission
   document.getElementById('loginForm').addEventListener('submit', function (event) {
-      event.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-      // AJAX request for sign-in
-      fetch('/login', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email: email, password: password })
-      })
+    // AJAX request for sign-in
+    fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: email, password: password })
+    })
       .then(response => response.json())
       .then(data => {
-          if (data.success) {
-              document.getElementById('signInModal').classList.remove('show');
-              document.getElementById('user-content').style.display = 'block';
-              document.getElementById('user-email').textContent = data.email;
-          } else {
-              alert('Invalid email or password');
-          }
+        if (data.success) {
+          document.getElementById('signInModal').classList.remove('show');
+          document.getElementById('user-content').style.display = 'block';
+          document.getElementById('user-email').textContent = data.email;
+        } else {
+          alert('Invalid email or password');
+        }
       })
       .catch(error => console.error('Error:', error));
   });
 
   // Handle sign-up form submission
   document.getElementById('signUpForm').addEventListener('submit', function (event) {
-      event.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('signUpEmail').value;
-      const password = document.getElementById('signUpPassword').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
+    event.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('signUpEmail').value;
+    const password = document.getElementById('signUpPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
-      if (password !== confirmPassword) {
-          document.getElementById('passwordHelpBlock').innerText = "Passwords don't match!";
-          return;
-      }
+    if (password !== confirmPassword) {
+      document.getElementById('passwordHelpBlock').innerText = "Passwords don't match!";
+      return;
+    }
 
-      // AJAX request for sign-up
-      fetch('/sign-up', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name: name, email: email, password: password })
-      })
+    // AJAX request for sign-up
+    fetch('/sign-up', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: name, email: email, password: password })
+    })
       .then(response => response.json())
       .then(data => {
-          if (data.success) {
-              document.getElementById('signUpModal').classList.remove('show');
-              alert('Sign-up successful. Please sign in.');
-          } else {
-              alert('Error during sign-up: ' + data.message);
-          }
+        if (data.success) {
+          document.getElementById('signUpModal').classList.remove('show');
+          alert('Sign-up successful. Please sign in.');
+        } else {
+          alert('Error during sign-up: ' + data.message);
+        }
       })
       .catch(error => console.error('Error:', error));
   });
