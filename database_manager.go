@@ -16,7 +16,7 @@ func createDatabase() {
 	usr_statement.Exec()
 
 	post_db, _ := sql.Open("sqlite3", "./post.db")
-	post_statement, _ := post_db.Prepare("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, title TEXT, content TEXT, author TEXT, category TEXT, date TEXT)")
+	post_statement, _ := post_db.Prepare("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, title TEXT, content TEXT, category TEXT)")
 	post_statement.Exec()
 
 	post_db.Exec("ALTER TABLE posts ADD COLUMN user_id INTEGER")
