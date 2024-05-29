@@ -164,3 +164,66 @@ document.getElementById('addPostButton').addEventListener('click', function() {
   });
 });
 
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Handle sign-in form submission
+  document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // AJAX request for sign-in
+      fetch('/login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              document.getElementById('signInModal').classList.remove('show');
+              document.getElementById('user-content').style.display = 'block';
+              document.getElementById('user-email').textContent = data.email;
+          } else {
+              alert('Invalid email or password');
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  });
+
+  // Handle sign-up form submission
+  document.getElementById('signUpForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('signUpEmail').value;
+      const password = document.getElementById('signUpPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password !== confirmPassword) {
+          document.getElementById('passwordHelpBlock').innerText = "Passwords don't match!";
+          return;
+      }
+
+      // AJAX request for sign-up
+      fetch('/sign-up', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name: name, email: email, password: password })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              document.getElementById('signUpModal').classList.remove('show');
+              alert('Sign-up successful. Please sign in.');
+          } else {
+              alert('Error during sign-up: ' + data.message);
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  });
+});
