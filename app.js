@@ -34,7 +34,7 @@ document.getElementById('signUpForm').addEventListener('submit', function(event)
   const email = document.getElementById('signUpEmail').value;
   const password = document.getElementById('signUpPassword').value;
 
-  fetch('/signup', {
+  fetch('/sign-up', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
