@@ -9,18 +9,10 @@ func main() {
 	WriteAllData()
 	r := gin.Default()
 
-	r.Static("/static", "./index.html")
-
-	r.GET("/sign-up", func(c *gin.Context) {
-		c.File("./sign-up.html")
-	})
-
-	r.GET("/login", func(c *gin.Context) {
-		c.File("./login.html")
-	})
+	r.Static("/static", "templates/index.html")
 
 	r.GET("/", func(c *gin.Context) {
-		c.File("./index.html")
+		c.File("templates/index.html")
 	})
 
 	r.POST("/sign-up", SignUp)
