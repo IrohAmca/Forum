@@ -145,12 +145,12 @@
 
           <div id="content" class="col-6 d-flex justify-content-end align-items-center">
             <div class="container">
-              <button onclick="location.href='/templates/login.html'" style="margin-left: 10rem;" class="btn btn-primary">
-                <img src="/png/user.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
+              <button style="margin-left: 10rem;" class="btn btn-primary">
+                <img src="png/user.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
                 Sign In
             </button>
-            <button onclick="location.href='/templates/sign-up.html'" class="btn btn-primary">
-                <img src="/png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
+            <button class="btn btn-primary">
+                <img src="png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
                 Sign Up
             </button>
               <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
@@ -163,7 +163,7 @@
                       </button>
                     </div>
                     <div class="modal-body">
-                      <form id="loginForm">
+                      <form id="loginForm" action="/login" method="POST">
                         <div class="form-group">
                           <label for="email">Email:</label>
                           <input type="email" class="form-control" id="email" required>
@@ -189,7 +189,7 @@
                       </button>
                     </div>
                     <div class="modal-body">
-                      <form id="signUpForm">
+                      <form id="signUpForm" action="sign-up" method="POST">
                         <div class="form-group">
                           <label for="name">Name:</label>
                           <input type="text" class="form-control" id="name" required>
