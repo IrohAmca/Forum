@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -39,6 +40,8 @@ func login(c *gin.Context) {
 		return
 	}
 	username, _ := Query_username(loginInput.Email)
+
+	c.SetCookie("user_id", strconv.Itoa(userID), 3600, "/", "localhost", false, false)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username})
 }
 

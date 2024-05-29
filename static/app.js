@@ -15,6 +15,14 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
       if (data.success) {
         $('#signInModal').modal('hide');
         alert(data.message);
+        $(document).ready(function() {
+          var userId = getCookie('user_id');
+          console.log(userId);
+          if (userId) {
+              $('#signInButton').hide();
+              $('#signUpButton').hide();
+          }
+      });
       } else {
         alert('Error logging in user: ' + data.message);
       }
@@ -60,6 +68,11 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
     .catch(error => console.error('Error:', error));
 
 });
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
+}
 
 
 //forum kısmı -- comment, like- dislike
