@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -53,29 +52,23 @@ func authenticate(storedPassword, inputPassword string) error {
 }
 func SignUp(c *gin.Context) {
 	var user struct {
+		Username            string `form:"username" binding:"required"`
 		Email           string `form:"email" binding:"required"`
 		Password        string `form:"password" binding:"required"`
 		ConfirmPassword string `form:"confirm_password" binding:"required"`
-		Age             int    `form:"age" binding:"required"`
 	}
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user.Age, _ = strconv.Atoi(c.PostForm("age"))
 	c.JSON(http.StatusOK, gin.H{"message": user.ConfirmPassword})
 	c.JSON(http.StatusOK, gin.H{"message": user.Password})
 	if user.Password != user.ConfirmPassword {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
 		return
 	}
-
-	if user.Age < 18 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "You must be at least 18 years old to sign up"})
-		return
-	}
 	updateUserID()
-	insertData(userID, user.Email, user.Password, user.Age)
+	insertData(userID, user.Username, user.Email, user.Password)
 	userID++
 
 	c.JSON(http.StatusOK, gin.H{"message": "User successfully created"})

@@ -12,7 +12,7 @@ var database *sql.DB
 func createDatabase() {
 	database, _ = sql.Open("sqlite3", "./database.db")
 
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, email TEXT, password TEXT, age INTEGER)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, username TEXT, email TEXT, password TEXT)")
 	statement.Exec()
 }
 
@@ -62,16 +62,16 @@ func Query(id int) (string, string, error) {
 	return email, password, nil
 }
 
-func insertData(id int, email, password string, age int) {
+func insertData(id int, username, email, password string) {
 	hashedPassword := hashPassword(password)
-	statement, err := database.Prepare("INSERT OR IGNORE INTO people (id, email, password, age) VALUES (?, ?, ?, ?)")
+	statement, err := database.Prepare("INSERT OR IGNORE INTO people (id, username, email, password) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		fmt.Println("Error preparing statement:", err)
 		return
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(id, email, hashedPassword, age)
+	_, err = statement.Exec(id, username, email, hashedPassword)
 	if err != nil {
 		fmt.Println("Error executing statement:", err)
 		return
@@ -81,7 +81,7 @@ func insertData(id int, email, password string, age int) {
 }
 
 func WriteAllData() {
-	rows, err := database.Query("SELECT id, email, password, age FROM people")
+	rows, err := database.Query("SELECT id, username, email, password FROM people")
 	if err != nil {
 		fmt.Println("Error querying data:", err)
 		return
@@ -89,14 +89,14 @@ func WriteAllData() {
 	defer rows.Close()
 
 	for rows.Next() {
-		var id, age int
-		var email, password string
-		err := rows.Scan(&id, &email, &password, &age)
+		var id int
+		var email, password, username string
+		err := rows.Scan(&id, &username, &email, &password)
 		if err != nil {
 			fmt.Println("Error scanning row:", err)
 			continue
 		}
-		fmt.Printf("ID: %d, Email: %s, Password: %s, Age: %d\n", id, email, password, age)
+		fmt.Printf("ID: %d, username: %s, Email: %s, Password: %s:\n", id, username, email, password)
 	}
 }
 
