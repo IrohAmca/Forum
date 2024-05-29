@@ -1,59 +1,24 @@
 document.getElementById('loginForm').addEventListener('submit', function(event) {
-  event.preventDefault(); // Formun varsayılan submit davranışını engelle
-
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  fetch('/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email: email, password: password })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      document.getElementById('user-email').textContent = email;
-      $('#signInModal').modal('hide'); // Modal'ı kapat
-      document.getElementById('user-content').style.display = 'block';
-    } else {
-      alert('Giriş başarısız: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-  });
+  event.preventDefault(); // Formun varsayılan davranışını engelle
+  var email = document.getElementById('email').value;
+  var password = document.getElementById('password').value;
+  console.log('Giriş yapıldı:', email, password);
+  // Giriş işlemleri burada yapılacak
+  $('#signInModal').modal('hide'); // Modalı kapat
+  // Kullanıcı içeriği göster ve oturum açma düğmesini gizle
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('user-content').style.display = 'block';
+  document.getElementById('user-email').textContent = email;
 });
 
 document.getElementById('signUpForm').addEventListener('submit', function(event) {
-  event.preventDefault(); // Formun varsayılan submit davranışını engelle
-
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('signUpEmail').value;
-  const password = document.getElementById('signUpPassword').value;
-
-  fetch('/signup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ name: name, email: email, password: password })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      $('#signUpModal').modal('hide'); // Modal'ı kapat
-      alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
-    } else {
-      alert('Kayıt başarısız: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-  });
+  event.preventDefault(); // Formun varsayılan davranışını engelle
+  var name = document.getElementById('name').value;
+  var email = document.getElementById('signUpEmail').value;
+  var password = document.getElementById('signUpPassword').value;
+  console.log('Kayıt yapıldı:', name, email, password);
+  // Kayıt işlemleri burada yapılacak
+  $('#signUpModal').modal('hide'); // Modalı kapat
 });
 
 
@@ -137,3 +102,36 @@ document.addEventListener('DOMContentLoaded', function () {
     postList.prepend(newPost);
   };
 });
+document.getElementById('addPostButton').addEventListener('click', function() {
+  addNewPost();
+});
+
+
+// filter
+
+ // Filtreleme Fonksiyonu
+ document.addEventListener('DOMContentLoaded', function () {
+  // Kategori filtrelerini işle
+  var categoryFilters = document.querySelectorAll('.category-filter');
+  categoryFilters.forEach(function (filter) {
+    filter.addEventListener('change', function () {
+      // Seçilen kategorileri al
+      var selectedCategories = Array.from(categoryFilters)
+        .filter(function (checkbox) { return checkbox.checked; })
+        .map(function (checkbox) { return checkbox.value; });
+      console.log(selectedCategories); // Seçilen kategorileri konsola yazdır
+      // Seçilen kategorilere göre işlem yapmak için bu bilgiyi kullanabilirsiniz
+    });
+  });
+
+  // Likes ve Dates filtrelerini işle
+  var filterTypeRadios = document.querySelectorAll('input[name="filterType"]');
+  filterTypeRadios.forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      var filterType = this.value; // Seçilen filtre türünü al
+      console.log(filterType); // Seçilen filtreyi konsola yazdır
+      // Seçilen filtreye göre işlem yapmak için bu bilgiyi kullanabilirsiniz
+    });
+  });
+});
+
