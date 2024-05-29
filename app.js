@@ -12,13 +12,42 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
 });
 
 document.getElementById('signUpForm').addEventListener('submit', function(event) {
-  event.preventDefault(); // Formun varsayılan davranışını engelle
-  var name = document.getElementById('name').value;
-  var email = document.getElementById('signUpEmail').value;
-  var password = document.getElementById('signUpPassword').value;
-  console.log('Kayıt yapıldı:', name, email, password);
-  // Kayıt işlemleri burada yapılacak
-  $('#signUpModal').modal('hide'); // Modalı kapat
+  event.preventDefault(); // Formun varsayılan submit davranışını engelle
+
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('signUpEmail').value;
+  const password = document.getElementById('signUpPassword').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+  const passwordHelp = document.getElementById('passwordHelp');
+
+  if (password !== confirmPassword) {
+    passwordHelp.textContent = 'Passwords do not match.';
+    passwordHelp.style.color = 'red';
+    return;
+  } else {
+    passwordHelp.textContent = '';
+  }
+
+  fetch('/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: name, email: email, password: password })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      $('#signUpModal').modal('hide'); // Modal'ı kapat
+      alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
+    } else {
+      alert('Kayıt başarısız: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
+  });
 });
 
 
