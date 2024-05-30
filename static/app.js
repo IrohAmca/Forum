@@ -75,6 +75,7 @@ function getCookie(name) {
 }
 
 
+
 //forum kısmı -- comment, like- dislike
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var commentText = replyForm.querySelector('input').value;
     var newComment = document.createElement('div');
     newComment.classList.add('comment');
-    newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
+    newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
     replyForm.insertAdjacentElement('afterend', newComment);
     replyForm.style.display = 'none';
   };

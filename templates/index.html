@@ -157,6 +157,8 @@
             <img src="../png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
             Sign Up
           </button>
+        
+          
 
           <!-- Sign In Modal -->
           <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
@@ -228,23 +230,47 @@
       </div>
     </header>
 
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item dropdown">
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  Dropdown button
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#">Action</a></li>
+                  <li><a class="dropdown-item" href="#">Another action</a></li>
+                  <li><a class="dropdown-item" href="#">Something else here</a></li>
+                </ul>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+            </li>
+          </ul>
+          <form class="d-flex" role="search">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+    </nav>
 
-    <div class="nav-scroller py-1 mb-3 border-bottom">
-      <nav class="nav nav-underline justify-content-between">
-        <a class="nav-item nav-link link-body-emphasis active" href="#">World</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">U.S.</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Technology</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Design</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Culture</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Business</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Politics</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Opinion</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Science</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Health</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Style</a>
-        <a class="nav-item nav-link link-body-emphasis" href="#">Travel</a>
-      </nav>
-    </div>
+
 
     <main class="container">
       <div class="row g-5">
@@ -307,6 +333,12 @@
     crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="/static/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+    integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+    crossorigin="anonymous"></script>
 </body>
 
 </html>
