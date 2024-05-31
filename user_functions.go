@@ -23,7 +23,6 @@ func login(c *gin.Context) {
 		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"`
 	}
-
 	if err := c.ShouldBind(&loginInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": err.Error()})
 		return
@@ -51,9 +50,16 @@ func SignUp(c *gin.Context) {
 		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"`
 	}
-
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": false, "message": err.Error()})
+		return
+	}
+	if check_username(user.Username) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": "username already exists"})
+		return
+	}
+	if check_email(user.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": "This email is already registered"})
 		return
 	}
 	updateUserID()

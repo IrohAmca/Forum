@@ -79,6 +79,29 @@ func Query_email(email string) (string, error) {
 	}
 	return password, nil
 }
+func check_email(email string) bool {
+	row := user_db.QueryRow("SELECT email FROM people WHERE email = ?", email)
+	err := row.Scan(&email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return true
+		}
+		return false
+	}
+	return true
+}
+func check_username(username string) bool {
+	row := user_db.QueryRow("SELECT username FROM people WHERE username = ?", username)
+	err := row.Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+		return false
+	}
+	return true
+}
+
 func Query_username(email string) (string, error) {
 	var username string
 	row := user_db.QueryRow("SELECT username FROM people WHERE email = ?", email)
