@@ -18,31 +18,65 @@ func createDatabase() {
 		log.Fatal("Database connection error:", err)
 	}
 
-	usr_statement, err := user_db.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, username TEXT, email TEXT, password TEXT)")
-	if err != nil {
-		log.Fatal("Error preparing statement:", err)
-	}
-	_, err = usr_statement.Exec()
-	if err != nil {
-		log.Fatal("Error creating table:", err)
-	}
-	fmt.Println("User table created successfully.")
+	creationQueries := []string{
+		`CREATE TABLE IF NOT EXISTS Users (
+			UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+			Name TEXT,
+			Lastname TEXT,
+			Nickname TEXT NOT NULL UNIQUE,
+			Email TEXT NOT NULL UNIQUE,
+			UserBirthdate DATE,
+			Password TEXT NOT NULL
+		);`,
+		`CREATE TABLE IF NOT EXISTS Posts (
+			PostID INTEGER PRIMARY KEY AUTOINCREMENT,
+			ThreadID INTEGER,
+			UserID INTEGER,
+			Content TEXT NOT NULL,
+			CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (UserID) REFERENCES Users(UserID),
+			FOREIGN KEY (ThreadID) REFERENCES Threads(ThreadID)
+		);`,
+		`CREATE TABLE IF NOT EXISTS Likes(
+			LikeID INTEGER PRIMARY KEY AUTOINCREMENT,
+			UserID INTEGER,
+			PostID INTEGER,
+			FOREIGN KEY (UserID) REFERENCES Users(UserID),
+			FOREIGN KEY (PostID) REFERENCES Posts(PostID)
+		);`,
+		`CREATE TABLE IF NOT EXISTS Threads(
+			ThreadID INTEGER PRIMARY KEY AUTOINCREMENT,
+			UserID INTEGER,
+			CategoryID INTEGER,
+			CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (UserID) REFERENCES Users(UserID),
+			FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+		);`,
+		`CREATE TABLE IF NOT EXISTS Categories(
+			CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+			CategoryName TEXT NOT NULL UNIQUE,
+			CategoryDescription TEXT 
+		);`,
+		`CREATE TABLE IF NOT EXISTS Comments (
+			CommentID INTEGER PRIMARY KEY AUTOINCREMENT,
+			UserID  INTEGER,
+			PostID INTEGER,
+			Content TEXT NOT NULL,
+			CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (UserID) REFERENCES Users(UserID),
+			FOREIGN KEY (PostID) REFERENCES Posts(PostID)
+		);`}
 
-	post_db, err := sql.Open("sqlite3", "databases/post.db")
-	if err != nil {
-		log.Fatal("Database connection error:", err)
+	for _, query := range creationQueries {
+		_, err := user_db.Exec(query)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	defer post_db.Close()
 
-	post_statement, err := post_db.Prepare("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, title TEXT, content TEXT, category TEXT, user_id INTEGER)")
-	if err != nil {
-		log.Fatal("Error preparing statement:", err)
-	}
-	_, err = post_statement.Exec()
-	if err != nil {
-		log.Fatal("Error creating table:", err)
-	}
-	fmt.Println("Post table created successfully.")
 }
 
 func updateUserID() {
