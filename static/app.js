@@ -1,9 +1,11 @@
+$('#signOutButton').hide();
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
   var email = document.getElementById('loginEmail').value;
   var password = document.getElementById('loginPassword').value;
-  fetch('/login', {
+
+  fetch('/login', { 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -17,10 +19,11 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
         alert(data.message);
         $(document).ready(function() {
           var userId = getCookie('user_id');
-          console.log(userId);
+          //console.log(userId);
           if (userId) {
               $('#signInButton').hide();
               $('#signUpButton').hide();
+              $('#signOutButton').show();
           }
       });
       } else {
@@ -58,22 +61,46 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
     .then(response => response.json())
     .then(data => {
       console.log(data);
-      if (data.success) {
+      if (data.success) { // true
         $('#signUpModal').modal('hide');
         alert(data.message);
       } else {
-        alert("Error signing up user: " + data.error);
+        alert("Error signing up user: " + data.message);
       }
     })
     .catch(error => console.error('Error:', error));
 
 });
+document.getElementById('signOutButton').addEventListener('click', function () {
+  fetch('/sign-out', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        $('#signOutButton').hide(); // Gizleme ve görüntüleme işlemlerini dinamik olarak cookie üzerinden kontrol eden bir fonksiyon yazılabilir.
+        $('#signInButton').show();
+        $('#signUpButton').show();
+        alert(data.message);
+      } else {
+        alert("Error signing out: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+});
+
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
   if (parts.length == 2) return parts.pop().split(";").shift();
 }
 
+function deleteCookie(name) {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
 
 
 //forum kısmı -- comment, like- dislike
@@ -145,6 +172,23 @@ document.addEventListener('DOMContentLoaded', function () {
   window.createPost = function () {
     var title = document.getElementById('new-post-title').value;
     var content = document.getElementById('new-post-content').value;
+    fetch('/create-post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title: title, content: content})
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+        }
+        else {
+          alert("Error creating post: " + data.message);
+        }
+      })
+      .catch(error => console.error('Error:', error))
 
     var newPost = document.createElement('article');
     newPost.classList.add('post');
@@ -159,7 +203,6 @@ document.getElementById('addPostButton').addEventListener('click', function () {
 });
 
 
-// filter
 
 // Filtreleme Fonksiyonu
 document.addEventListener('DOMContentLoaded', function () {
@@ -184,69 +227,5 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log(filterType); // Seçilen filtreyi konsola yazdır
       // Seçilen filtreye göre işlem yapmak için bu bilgiyi kullanabilirsiniz
     });
-  });
-});
-
-
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Handle sign-in form submission
-  document.getElementById('loginForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    // AJAX request for sign-in
-    fetch('/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email: email, password: password })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('signInModal').classList.remove('show');
-          document.getElementById('user-content').style.display = 'block';
-          document.getElementById('user-email').textContent = data.email;
-        } else {
-          alert('Invalid email or password');
-        }
-      })
-      .catch(error => console.error('Error:', error));
-  });
-
-  // Handle sign-up form submission
-  document.getElementById('signUpForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('signUpEmail').value;
-    const password = document.getElementById('signUpPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    if (password !== confirmPassword) {
-      document.getElementById('passwordHelpBlock').innerText = "Passwords don't match!";
-      return;
-    }
-
-    // AJAX request for sign-up
-    fetch('/sign-up', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name: name, email: email, password: password })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('signUpModal').classList.remove('show');
-          alert('Sign-up successful. Please sign in.');
-        } else {
-          alert('Error during sign-up: ' + data.message);
-        }
-      })
-      .catch(error => console.error('Error:', error));
   });
 });

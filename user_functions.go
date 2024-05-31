@@ -24,22 +24,22 @@ func login(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBind(&loginInput); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 	passwordReal, err := Query_email(loginInput.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": false, "message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
 	err = authenticate(passwordReal, loginInput.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": false, "message": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
 		return
 	}
 	username, _ := Query_username(loginInput.Email)
-
+	userID, _ := getUserID(loginInput.Email)
 	c.SetCookie("user_id", strconv.Itoa(userID), 3600, "/", "localhost", false, false)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username})
 }
@@ -51,23 +51,13 @@ func SignUp(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": false, "message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	if check_username(user.Username) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": "username already exists"})
+	if err := insertUser( user.Username, user.Email, user.Password); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	if check_email(user.Email) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": false, "message": "This email is already registered"})
-		return
-	}
-	updateUserID()
-	if err := insertData(userID, user.Username, user.Email, user.Password); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": false, "message": err.Error()})
-		return
-	}
-	userID++
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": user.Username + " has been registered successfully"})
 }
 
