@@ -5,7 +5,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
   var email = document.getElementById('loginEmail').value;
   var password = document.getElementById('loginPassword').value;
 
-  fetch('/login', { 
+  fetch('/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -17,15 +17,15 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
       if (data.success) {
         $('#signInModal').modal('hide');
         alert(data.message);
-        $(document).ready(function() {
+        $(document).ready(function () {
           var userId = getCookie('user_id');
           //console.log(userId);
           if (userId) {
-              $('#signInButton').hide();
-              $('#signUpButton').hide();
-              $('#signOutButton').show();
+            $('#signInButton').hide();
+            $('#signUpButton').hide();
+            $('#signOutButton').show();
           }
-      });
+        });
       } else {
         alert('Error logging in user: ' + data.message);
       }
@@ -101,131 +101,54 @@ function getCookie(name) {
 function deleteCookie(name) {
   document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
+function getAllPosts() {
+  fetch('/get-posts', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        var posts = data.posts;
+        posts.forEach(post => {
+          var newPost = document.createElement('article');
+          newPost.classList.add('post');
+          newPost.innerHTML = '<h2 class="blog-post-title">' + post.Title + '</h2><p class="blog-post-meta">'+post.CreatedAt +' by <a href="#">' + post.Username + '</a></p><p>' + post.Content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
-
-//forum kısmı -- comment, like- dislike
-
-document.addEventListener('DOMContentLoaded', function () {
-  function updateCount(button, countClass, increment) {
-    var countElement = button.querySelector(countClass);
-    var count = parseInt(countElement.textContent);
-    countElement.textContent = count + increment;
-  }
-
-  window.likePost = function (button) {
-    updateCount(button, '.like-count', 1);
-  };
-
-  window.dislikePost = function (button) {
-    updateCount(button, '.dislike-count', 1);
-  };
-
-  window.replyPost = function (button) {
-    var replyForm = button.closest('.post').querySelector('.reply-form');
-    replyForm.style.display = 'block';
-  };
-
-  window.submitComment = function (button) {
-    var replyForm = button.closest('.reply-form');
-    var commentText = replyForm.querySelector('input').value;
-    var newComment = document.createElement('div');
-    newComment.classList.add('comment');
-    newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
-    replyForm.insertAdjacentElement('afterend', newComment);
-    replyForm.style.display = 'none';
-  };
-
-  window.likeComment = function (button) {
-    updateCount(button, '.like-count', 1);
-  };
-
-  window.dislikeComment = function (button) {
-    updateCount(button, '.dislike-count', 1);
-  };
-
-  window.replyComment = function (button) {
-    var comment = button.closest('.comment');
-    var replyForm = comment.querySelector('.reply-form');
-    replyForm.style.display = 'block';
-  };
-
-  window.submitReply = function (button) {
-    var replyForm = button.closest('.reply-form');
-    var replyText = replyForm.querySelector('input').value;
-    var newReply = document.createElement('div');
-    newReply.classList.add('comment');
-    newReply.innerHTML = '<p>' + replyText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
-    replyForm.insertAdjacentElement('afterend', newReply);
-    replyForm.style.display = 'none';
-  };
-
-  window.deletePost = function (button) {
-    var post = button.closest('.post');
-    post.remove();
-  };
-
-  window.deleteComment = function (button) {
-    var comment = button.closest('.comment');
-    comment.remove();
-  };
-
-  window.createPost = function () {
-    var title = document.getElementById('new-post-title').value;
-    var content = document.getElementById('new-post-content').value;
-    fetch('/create-post', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ title: title, content: content})
+          var postList = document.querySelector('.post-list');
+          postList.prepend(newPost);
+        });
+      } else {
+        alert("Error getting posts: " + data.message);
+      }
     })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(data.message);
-        }
-        else {
-          alert("Error creating post: " + data.message);
-        }
-      })
-      .catch(error => console.error('Error:', error))
+    .catch(error => console.error('Error:', error));
+}
 
-    var newPost = document.createElement('article');
-    newPost.classList.add('post');
-    newPost.innerHTML = '<h2 class="blog-post-title">' + title + '</h2><p class="blog-post-meta">January 1, 2021 by <a href="#">Mark</a></p><p>' + content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+getAllPosts();
 
-    var postList = document.querySelector('.post-list');
-    postList.prepend(newPost);
-  };
-});
-document.getElementById('addPostButton').addEventListener('click', function () {
-  addNewPost();
-});
+document.getElementById('postForm').addEventListener('submit', function (event) {
+  event.preventDefault();
 
+  var title = document.getElementById('postTitle').value;
+  var content = document.getElementById('postContent').value;
 
-
-// Filtreleme Fonksiyonu
-document.addEventListener('DOMContentLoaded', function () {
-  // Kategori filtrelerini işle
-  var categoryFilters = document.querySelectorAll('.category-filter');
-  categoryFilters.forEach(function (filter) {
-    filter.addEventListener('change', function () {
-      // Seçilen kategorileri al
-      var selectedCategories = Array.from(categoryFilters)
-        .filter(function (checkbox) { return checkbox.checked; })
-        .map(function (checkbox) { return checkbox.value; });
-      console.log(selectedCategories); // Seçilen kategorileri konsola yazdır
-      // Seçilen kategorilere göre işlem yapmak için bu bilgiyi kullanabilirsiniz
-    });
-  });
-
-  // Likes ve Dates filtrelerini işle
-  var filterTypeRadios = document.querySelectorAll('input[name="filterType"]');
-  filterTypeRadios.forEach(function (radio) {
-    radio.addEventListener('change', function () {
-      var filterType = this.value; // Seçilen filtre türünü al
-      console.log(filterType); // Seçilen filtreyi konsola yazdır
-      // Seçilen filtreye göre işlem yapmak için bu bilgiyi kullanabilirsiniz
-    });
-  });
+  fetch('/create-post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ title: title, content: content })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert("Error creating post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
 });

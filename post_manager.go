@@ -66,4 +66,14 @@ func createPost(c *gin.Context) {
 		return
 	}
 	insertPost(threadID, userID, post.Content)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
+}
+
+func getPosts(c *gin.Context){
+	posts,err :=getAllPosts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "posts": posts})
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -222,23 +223,23 @@ func insertPost(threadID, userID int, content string) error {
 	return nil
 }
 
-func insertThread(userID, categoryID int, title string) (int,error) {
+func insertThread(userID, categoryID int, title string) (int, error) {
 	statement, err := user_db.Prepare("INSERT INTO Threads (UserID, CategoryID, Title) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
-		return 0,err
+		return 0, err
 	}
 	defer statement.Close()
 
 	_, err = statement.Exec(userID, categoryID, title)
 	if err != nil {
-		log.Println("Error executing statement:",err)
-		return 0,err
+		log.Println("Error executing statement:", err)
+		return 0, err
 	}
 	statement, err = user_db.Prepare("SELECT ThreadID FROM Threads WHERE Title = ?")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
-		return 0,err
+		return 0, err
 	}
 	defer statement.Close()
 
@@ -247,9 +248,9 @@ func insertThread(userID, categoryID int, title string) (int,error) {
 	err = row.Scan(&id)
 	if err != nil {
 		log.Println("Error scanning row:", err)
-		return 0,err
+		return 0, err
 	}
-	return id,nil
+	return id, nil
 }
 
 func WriteAllData() {
@@ -270,4 +271,76 @@ func WriteAllData() {
 		}
 		fmt.Printf("ID: %d, Username: %s, Email: %s, Password: %s\n", id, username, email, password)
 	}
+}
+
+type Post struct {
+	PostID    int
+	ThreadID  int
+	Title     string
+	UserID    int
+	Username  string
+	Content   string
+	CreatedAt string
+}
+
+func getAllPosts() ([]Post, error) {
+	posts := []Post{}
+	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts")
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var postID, threadID, userID int
+		var content string
+		var createdAt time.Time
+		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		post := Post{
+			PostID:    postID,
+			ThreadID:  threadID,
+			UserID:    userID,
+			Content:   content,
+			CreatedAt: createdAt.Format("2006-01-02 15:04:05"), // Format the time as desired
+		}
+		posts = append(posts, post)
+	}
+
+	for i, post := range posts {
+		rows, err = user_db.Query("SELECT Nickname FROM Users WHERE UserID = ?", post.UserID)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		defer rows.Close()
+		rows.Next()
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		posts[i].Username = username
+	}
+
+	for i, post := range posts {
+		rows, err = user_db.Query("SELECT Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		defer rows.Close()
+		rows.Next()
+		var title string
+		err := rows.Scan(&title)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		posts[i].Title = title
+	}
+	return posts, nil
 }
