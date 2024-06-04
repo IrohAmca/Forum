@@ -93,34 +93,6 @@ func Query_email(email string) (string, error) {
 	return password, nil
 }
 
-func check_email(email string) bool {
-	row := user_db.QueryRow("SELECT Email FROM Users WHERE Email = ?", email)
-	err := row.Scan(&email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return true
-		}
-	}
-	if email == "" {
-		return true
-	}
-	return false
-}
-
-func check_username(username string) bool {
-	row := user_db.QueryRow("SELECT Nickname FROM Users WHERE Nickname = ?", username)
-	err := row.Scan(&username)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false
-		}
-	}
-	if username == "" {
-		return false
-	}
-	return true
-}
-
 func Query_username(email string) (string, error) {
 	var username string
 	row := user_db.QueryRow("SELECT Nickname FROM Users WHERE Email = ?", email)
@@ -174,25 +146,38 @@ func SetAdmin(id int) error {
 	}
 	return nil
 }
-
 func insertUser(username, email, password string) error {
 	hashedPassword := hashPassword(password)
-	statement, err := user_db.Prepare("INSERT OR IGNORE INTO Users (UserLevel, Nickname, Email, Password) VALUES (?, ?, ?, ?)")
+
+	// Check if username or email already exists.
+	var exists bool
+	err := user_db.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE Nickname = ? OR Email = ?)", username, email).Scan(&exists)
+	if err != nil {
+		log.Println("Error checking for existing user:", err)
+		return err
+	}
+
+	if exists {
+		fmt.Println("Error: Username or email already exists.")
+		return fmt.Errorf("username or email already exists")
+	}
+
+	statement, err := user_db.Prepare("INSERT INTO Users (UserLevel, Nickname, Email, Password) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(0, username, email, hashedPassword)
+	_, err = statement.Exec(0, username, email, hashedPassword) // user lever for zoro
 	if err != nil {
-		log.Println("Error executing statement:", err)
-		return err
+		log.Fatal(err)
 	}
 
-	fmt.Println("Data inserted successfully.")
+	fmt.Println("User added successfully.")
 	return nil
 }
+
 func getUserID(email string) (int, error) {
 	var id int
 	row := user_db.QueryRow("SELECT UserID FROM Users WHERE Email = ?", email)
