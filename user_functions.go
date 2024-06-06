@@ -54,7 +54,7 @@ func SignUp(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	if err := insertUser( user.Username, user.Email, user.Password); err != nil {
+	if err := insertUser(user.Username, user.Email, user.Password); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -69,3 +69,7 @@ func authenticate(storedPassword, inputPassword string) error {
 	}
 	return nil
 }
+
+/*func LikeDislike()  {
+
+}*/

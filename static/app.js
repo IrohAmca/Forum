@@ -127,6 +127,10 @@ function getAllPosts() {
     .catch(error => console.error('Error:', error));
 }
 
+function likeAndDislike{
+  
+}
+
 getAllPosts();
 
 document.getElementById('postForm').addEventListener('submit', function (event) {
