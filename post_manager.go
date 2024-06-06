@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -53,7 +54,7 @@ func createPost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token,err := c.Cookie("token")
+	token, err := c.Cookie("token")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -79,4 +80,26 @@ func getPosts(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "posts": posts})
+}
+
+func deletePost(c *gin.Context) {
+	var post struct {
+		PostID string `json:"PostID" binding:"required"`
+	}
+	if err := c.ShouldBind(&post); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+		return
+	}
+	postID, err := strconv.Atoi(post.PostID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
+		return
+	}
+	err = deletePostFromDB(postID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post deleted successfully"})
 }

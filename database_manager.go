@@ -160,6 +160,18 @@ func QueryToken(username string) (string, error) {
 	}
 	return token, nil
 }
+func QueryTokenID(id int) (string, string, error) {
+	var token, username string
+	row := user_db.QueryRow("SELECT Token, Nickname FROM Users WHERE UserID = ?", id)
+	err := row.Scan(&token, &username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", fmt.Errorf("no user with id %d", id)
+		}
+		return "", "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return token, username, nil
+}
 
 func Query_ID(token string) (int, error) {
 	var id int
@@ -210,7 +222,7 @@ func insertUser(username, email, password, token string) error {
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(0, username,token, email, hashedPassword)
+	_, err = statement.Exec(0, username, token, email, hashedPassword)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return err
@@ -303,7 +315,7 @@ type Post struct {
 	PostID    int
 	ThreadID  int
 	Title     string
-	UserID    int
+	UserToken string
 	Username  string
 	Content   string
 	CreatedAt string
@@ -327,30 +339,21 @@ func getAllPosts() ([]Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		post := Post{
-			PostID:    postID,
-			ThreadID:  threadID,
-			UserID:    userID,
-			Content:   content,
-			CreatedAt: createdAt.Format("2006-01-02 15:04:05"), // Format the time as desired
-		}
-		posts = append(posts, post)
-	}
-
-	for i, post := range posts {
-		rows, err = user_db.Query("SELECT Nickname FROM Users WHERE UserID = ?", post.UserID)
-		if err != nil {
-			log.Println("Error querying data:", err)
-		}
-		defer rows.Close()
-		rows.Next()
-		var username string
-		err := rows.Scan(&username)
+		userToken,username, err := QueryTokenID(userID)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		posts[i].Username = username
+
+		post := Post{
+			PostID:    postID,
+			ThreadID:  threadID,
+			Content:   content,
+			UserToken: userToken,
+			Username:  username,
+			CreatedAt: createdAt.Format("2006-01-02 15:04:05"),
+		}
+		posts = append(posts, post)
 	}
 
 	for i, post := range posts {
@@ -369,4 +372,35 @@ func getAllPosts() ([]Post, error) {
 		posts[i].Title = title
 	}
 	return posts, nil
+}
+
+func checkToken(token string) bool {
+	var user string
+	row := user_db.QueryRow("SELECT Token FROM Users WHERE Token = ?", token)
+	err := row.Scan(&user)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+	}
+	if user == "" {
+		return false
+	}
+	return true
+}
+
+func deletePostFromDB(PostID int) error {
+	statement, err := user_db.Prepare("DELETE FROM Posts WHERE PostID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+	
+	_, err = statement.Exec(PostID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+	return nil
 }

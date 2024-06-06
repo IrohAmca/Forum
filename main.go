@@ -27,6 +27,7 @@ func main() {
 	r.POST("/sign-up", SignUp)
 	r.POST("/login", login)
 	r.POST("/create-post", createPost)
-
+	r.POST("check-token", UserChecker)
+	r.POST("delete-post", deletePost)
 	r.Run("localhost:8080")
 }

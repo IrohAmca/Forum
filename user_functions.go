@@ -101,3 +101,20 @@ func authenticate(storedPassword, inputPassword string) error {
 	}
 	return nil
 }
+
+func UserChecker(c *gin.Context) {
+	var user struct {
+		Token string `json:"token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	if checkToken(user.Token) {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid"})
+		return
+	}else{
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})
+		return
+	}
+}

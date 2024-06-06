@@ -1,17 +1,28 @@
-function CheckCookie() {
+function CheckToken() {
   var token = getCookie('token');
-        if (token) {
-          $('#signInButton').hide();
-          $('#signUpButton').hide();
-          $('#signOutButton').show();
-        }
-        else {
-          $('#signOutButton').hide();
-          $('#signInButton').show();
-          $('#signUpButton').show();
-        }
+  fetch('/check-token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ token: token })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        $('#signInButton').hide();
+        $('#signUpButton').hide();
+        $('#signOutButton').show();
+      }
+      else {
+        $('#signOutButton').hide();
+        $('#signInButton').show();
+        $('#signUpButton').show();
+      }
+    })
+    .catch(error => console.error('Error:', error));
 }
-CheckCookie();
+CheckToken();
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
@@ -28,9 +39,8 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        $('#signInModal').modal('hide');
         alert(data.message);
-        CheckCookie();
+        location.reload();
       } else {
         alert('Error logging in user: ' + data.message);
       }
@@ -64,9 +74,7 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
   })
     .then(response => response.json())
     .then(data => {
-      console.log(data);
-      if (data.success) { // true
-        $('#signUpModal').modal('hide');
+      if (data.success) {
         alert(data.message);
       } else {
         alert("Error signing up user: " + data.message);
@@ -85,10 +93,8 @@ document.getElementById('signOutButton').addEventListener('click', function () {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        $('#signOutButton').hide(); // Gizleme ve görüntüleme işlemlerini dinamik olarak cookie üzerinden kontrol eden bir fonksiyon yazılabilir.
-        $('#signInButton').show();
-        $('#signUpButton').show();
         alert(data.message);
+        location.reload();
       } else {
         alert("Error signing out: " + data.message);
       }
@@ -105,6 +111,35 @@ function getCookie(name) {
 function deleteCookie(name) {
   document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
+
+function deletePost(PostID) {
+  fetch('/delete-post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ PostID: PostID})
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert("Error deleting post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getDeleteButtonHtml(postToken,PostID) {
+  var token = getCookie('token');
+  
+  if (token == postToken) {
+    return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')">Delete</button>';
+  }
+  return '';
+}
+
 function getAllPosts() {
   fetch('/get-posts', {
     method: 'GET',
@@ -119,7 +154,7 @@ function getAllPosts() {
         posts.forEach(post => {
           var newPost = document.createElement('article');
           newPost.classList.add('post');
-          newPost.innerHTML = '<h2 class="blog-post-title">' + post.Title + '</h2><p class="blog-post-meta">'+post.CreatedAt +' by <a href="#">' + post.Username + '</a></p><p>' + post.Content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+          newPost.innerHTML = '<h2 class="blog-post-title">' + post.Title + '</h2><p class="blog-post-meta">' + post.CreatedAt + ' by <a href="#">' + post.Username + '</a></p><p>' + post.Content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button>'+getDeleteButtonHtml(post.UserToken,post.PostID)+'</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
