@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"os"
+	"time"
 )
 
 func hashPassword(password string) string {
@@ -16,30 +18,79 @@ func hashPassword(password string) string {
 	}
 	return string(hashedPassword)
 }
+func getID(c *gin.Context) (string, error) {
+	token := c.GetHeader("Authorization")
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil {
+		panic("Failed to parse token")
+	}
+	userID := claims["sub"].(string)
+	return userID, nil
+}
+func generateToken(username string) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": username,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		panic("Failed to generate token")
+	}
+	return tokenString
+}
 
 func login(c *gin.Context) {
 	var loginInput struct {
-		Email    string `form:"email" binding:"required"`
-		Password string `form:"password" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
 	}
-
 	if err := c.ShouldBind(&loginInput); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	emailReal, passwordReal, err := Query_email(loginInput.Email)
+	passwordReal, err := Query_email(loginInput.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
 	err = authenticate(passwordReal, loginInput.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
+		return
+	}
+	username, _ := Query_username(loginInput.Email)
+
+	token,err := QueryToken(username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": emailReal})
+	c.SetCookie("token", token, 3600, "/", "localhost", false, false)
+	c.Header("Authorization", token)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username, "token": token})
+}
+
+func SignUp(c *gin.Context) {
+	var user struct {
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	token := generateToken(user.Username)
+	if err := insertUser(user.Username, user.Email, user.Password, token); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": user.Username + " has been registered successfully"})
 }
 
 func authenticate(storedPassword, inputPassword string) error {
@@ -49,27 +100,4 @@ func authenticate(storedPassword, inputPassword string) error {
 		return errors.New("authentication failed")
 	}
 	return nil
-}
-func SignUp(c *gin.Context) {
-	var user struct {
-		Username            string `form:"username" binding:"required"`
-		Email           string `form:"email" binding:"required"`
-		Password        string `form:"password" binding:"required"`
-		ConfirmPassword string `form:"confirm_password" binding:"required"`
-	}
-	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": user.ConfirmPassword})
-	c.JSON(http.StatusOK, gin.H{"message": user.Password})
-	if user.Password != user.ConfirmPassword {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
-		return
-	}
-	updateUserID()
-	insertData(userID, user.Username, user.Email, user.Password)
-	userID++
-
-	c.JSON(http.StatusOK, gin.H{"message": "User successfully created"})
 }
