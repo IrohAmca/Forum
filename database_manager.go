@@ -311,6 +311,16 @@ func WriteAllData() {
 	}
 }
 
+type Comment struct {
+	CommentID int
+	UserID    int
+	PostID    int
+	Content   string
+	Username  string
+	CreatedAt string
+	UpdatedAt string
+}
+
 type Post struct {
 	PostID    int
 	ThreadID  int
@@ -319,8 +329,55 @@ type Post struct {
 	Username  string
 	Content   string
 	CreatedAt string
+	Comment   []Comment
 }
 
+func getCommentsByPostID(postID int) ([]Comment, error) {
+	comments := []Comment{}
+
+	rows, err := user_db.Query("SELECT CommentID, UserID, PostID, Content, CreatedAt, UpdatedAt FROM Comments WHERE PostID=?", postID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var comment Comment
+		var createdAt, updatedAt time.Time
+		err := rows.Scan(&comment.CommentID, &comment.UserID, &comment.PostID, &comment.Content, &createdAt, &updatedAt)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+
+		comment.CreatedAt = createdAt.Format("2006-01-02 15:04:05")
+		comment.UpdatedAt = updatedAt.Format("2006-01-02 15:04:05")
+		comments = append(comments, comment)
+
+	}
+
+	for i, comment := range comments {
+		rows, err = user_db.Query("SELECT Nickname FROM Users WHERE UserID=?", comment.UserID)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		defer rows.Close()
+
+		rows.Next()
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		comments[i].Username = username
+
+	}
+
+	return comments, nil
+
+}
 func getAllPosts() ([]Post, error) {
 	posts := []Post{}
 	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts")
@@ -339,7 +396,7 @@ func getAllPosts() ([]Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		userToken,username, err := QueryTokenID(userID)
+		userToken, username, err := QueryTokenID(userID)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -371,6 +428,19 @@ func getAllPosts() ([]Post, error) {
 		}
 		posts[i].Title = title
 	}
+
+	for i, post := range posts {
+		comments, err := getCommentsByPostID(post.PostID)
+		if err != nil {
+			log.Println("Error getting comments:", err)
+			return nil, err
+		}
+		if comments == nil {
+			comments = []Comment{}
+		} else {
+			posts[i].Comment = comments
+		}
+	}
 	return posts, nil
 }
 
@@ -396,11 +466,29 @@ func deletePostFromDB(PostID int) error {
 		return err
 	}
 	defer statement.Close()
-	
+
 	_, err = statement.Exec(PostID)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return err
 	}
 	return nil
+}
+func insertComment(userID, postID int, content string) error {
+	statement, err := user_db.Prepare("INSERT INTO Comments (UserID, PostID, Content) VALUES (?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(userID, postID, content)
+	if err != nil {
+		log.Println("Error executing statement,", err)
+		return err
+	}
+
+	fmt.Println("Data inserted successfully.")
+	return nil
+
 }

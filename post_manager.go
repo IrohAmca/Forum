@@ -103,3 +103,34 @@ func deletePost(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post deleted successfully"})
 }
+func createComment(c *gin.Context) {
+	var comment struct {
+		PostID  string `json:"postId" binding:"required"`
+		Content string `json:"comment" binding:"required"`
+	}
+	if err := c.ShouldBind(&comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+		return
+	}
+	postID, err := strconv.Atoi(comment.PostID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
+		return
+	}
+	token, err := c.Cookie("token")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	userID, err := Query_ID(token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	err = insertComment(userID,postID, comment.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment created successfully"})
+}
