@@ -144,23 +144,11 @@
       left: 100%;
       margin-top: -1px;
     }
-    .profile-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: #007bff;
-      color: white;
-      text-align: center;
-      line-height: 40px;
-      font-size: 18px;
-      margin-right: 10px;
-    }
   </style>
 </head>
 
 <body>
   <div class="container">
-    
     <header class="border-bottom lh-1 py-3">
       <div class="row flex-nowrap justify-content-between align-items-center"
         style="margin-top:20px; margin-left: 10px;">
@@ -180,7 +168,7 @@
             <img src="../png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
             Sign Up
           </button>
-          <div id="profileIconContainer"></div>
+
           <button id="signOutButton" class="btn btn-primary" style="display:none;">
             <img src="../png/logout.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 2px;">
             Sign Out
@@ -227,205 +215,209 @@
                       <label for="signUpUsername">Name:</label>
                       <input type="text" class="form-control" id="signUpUsername" required>
                     </div>
-                    <div id="NameHelpBlock" class="form-text"></div>
                     <div class="form-group">
                       <label for="signUpEmail">Email:</label>
                       <input type="email" class="form-control" id="signUpEmail" required>
                     </div>
-                    <div id="EmailHelpBlock" class="form-text"></div>
                     <div class="form-group">
                       <label for="signUpPassword">Password:</label>
                       <input type="password" class="form-control" id="signUpPassword" required>
                     </div>
-
-                    <div class="form-group">
-                      <label for="confirmSignUpPassword">Confirm Password:</label>
-                      <input type="password" class="form-control" id="confirmSignUpPassword" required>
-                    </div>
-                    <div id="passwordHelpBlock" class="form-text"></div>
-                    <button type="submit" class="btn btn-secondary">Sign Up</button>
+                    <button type="submit" class="btn btn-primary">Sign Up</button>
                   </form>
                 </div>
               </div>
             </div>
           </div>
 
-          <div id="user-content" style="display:none;">
-            <h2>Welcome, <span id="user-email"></span>!</h2>
-          </div>
         </div>
-      </div>
     </header>
 
-    <div class="container mt-5">
-      <h1>Filter Posts</h1>
-      <form id="filter-form" class="mb-4">
-        <div class="form-group">
-          <label for="keyword">Keyword</label>
-          <input type="text" id="keyword" class="form-control" placeholder="Enter keyword">
-        </div>
-        <div class="form-group">
-          <label for="sort-by">Sort By</label>
-          <select id="sort-by" class="form-control">
-            <option value="date-asc">Date (Ascending)</option>
-            <option value="date-desc">Date (Descending)</option>
-            <option value="likes-asc">Likes (Ascending)</option>
-            <option value="likes-desc">Likes (Descending)</option>
-          </select>
-        </div>
-        <button type="button" class="btn btn-primary" onclick="filterPosts()">Filter</button>
-      </form>
-  
-      <ul id="posts" class="list-group">
-        <!-- Posts will be dynamically inserted here -->
-      </ul>
+    <div class="nav-scroller py-1 mb-2">
+      <nav class="nav d-flex justify-content-between">
+        <a class="p-2 link-secondary" href="#">World</a>
+        <a class="p-2 link-secondary" href="#">U.S.</a>
+        <a class="p-2 link-secondary" href="#">Technology</a>
+        <a class="p-2 link-secondary" href="#">Design</a>
+        <a class="p-2 link-secondary" href="#">Culture</a>
+        <a class="p-2 link-secondary" href="#">Business</a>
+        <a class="p-2 link-secondary" href="#">Politics</a>
+        <a class="p-2 link-secondary" href="#">Opinion</a>
+        <a class="p-2 link-secondary" href="#">Science</a>
+        <a class="p-2 link-secondary" href="#">Health</a>
+        <a class="p-2 link-secondary" href="#">Style</a>
+        <a class="p-2 link-secondary" href="#">Travel</a>
+      </nav>
     </div>
-  
 
-    <!-- nav bar kısmı burada başlıyor-->
+    <div class="row">
+      <div class="col-12 mb-2">
+        <button id="createPostBtn" class="btn btn-primary">Create Post</button>
+      </div>
+    </div>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-danger">
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
-        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    <div class="row" id="createPostSection" style="display: none;">
+      <div class="col-12 mb-2">
+        <form id="createPostForm">
+          <div class="form-group">
+            <label for="postTitle">Post Title:</label>
+            <input type="text" class="form-control" id="postTitle" required>
+          </div>
+          <div class="form-group">
+            <label for="postContent">Post Content:</label>
+            <textarea class="form-control" id="postContent" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="postCategory">Category:</label>
+            <select class="form-control" id="postCategory" required>
+              <option value="">Select Category</option>
+              <option value="World">World</option>
+              <option value="U.S.">U.S.</option>
+              <option value="Technology">Technology</option>
+              <option value="Design">Design</option>
+              <option value="Culture">Culture</option>
+              <option value="Business">Business</option>
+              <option value="Politics">Politics</option>
+              <option value="Opinion">Opinion</option>
+              <option value="Science">Science</option>
+              <option value="Health">Health</option>
+              <option value="Style">Style</option>
+              <option value="Travel">Travel</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Post</button>
+        </form>
+      </div>
+    </div>
 
-      <!-- kategoriler -->
-    
-      <div class="dropdown">
-        <div class="dropdown-submenu">
-          <a class="dropdown-item dropdown-toggle text-bg-danger" style="margin-left: 5rem;" href="#">More options</a>
-          <ul class="dropdown-menu" id="dropdown-categories"></ul>
+    <main class="row">
+      <div class="col-md-8">
+        <div id="postsContainer">
+          <!-- Posts will be dynamically inserted here -->
         </div>
       </div>
-      <!-- kategori bitimi -->
 
-      <!-- filtreler -->
-      <div style="margin-left: 40rem;" class="collapse navbar-collapse" id="navbarNavDropdown">
-        <ul class="navbar-nav ">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-bg-danger" href="#" id="navbarDropdownMenuLink" role="button"
-              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Dropdown
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-              <a class="dropdown-item" href="#">Action</a>
-              <a class="dropdown-item" href="#">Another action</a>
-
-
-
-              <a class="dropdown-item" href="#">Something else here</a>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
-    <!-- filtre bitimi -->
-
-    <!-- navbar tarafı  burada bitiyor-->
-    <!-- forum post starts -->
-    <main class="container">
-      <div class="row g-5">
-        <div class="col-md-8">
-          <div class="new-post-form mb-4">
-            <form id="postForm">
-              <h4>Create a New Post</h4>
-              <input type="text" class="form-control mb-2" id="postTitle" placeholder="Post Title">
-             
-              
-              <textarea class="form-control mb-2" id="postContent" rows="3" placeholder="Post Content"></textarea>
-            
-              <button type="submit" class="btn btn-primary">Create Post</button>
-            </form>
+      <div class="col-md-4">
+        <div class="position-sticky" style="top: 2rem;">
+          <div class="p-4 mb-3 bg-body-tertiary rounded">
+            <h4 class="fst-italic">About</h4>
+            <p class="mb-0">Customize this section to tell your visitors a little bit about your publication, its
+              content, or something else entirely. Totally up to you.</p>
           </div>
-          <div class="post-list">
+
+          <div class="p-4">
+            <h4 class="fst-italic">Archives</h4>
+            <ol class="list-unstyled mb-0">
+              <li><a href="#">March 2021</a></li>
+              <li><a href="#">February 2021</a></li>
+              <li><a href="#">January 2021</a></li>
+              <li><a href="#">December 2020</a></li>
+              <li><a href="#">November 2020</a></li>
+              <li><a href="#">October 2020</a></li>
+              <li><a href="#">September 2020</a></li>
+              <li><a href="#">August 2020</a></li>
+              <li><a href="#">July 2020</a></li>
+              <li><a href="#">June 2020</a></li>
+              <li><a href="#">May 2020</a></li>
+              <li><a href="#">April 2020</a></li>
+            </ol>
           </div>
-        </div>
 
-       
-        <!-- forum post ends -->
-
-        <div class="col-md-4">
-          <div class="position-sticky" style="top: 2rem;">
-
-            <div class="p-4">
-              <h4 class="fst-italic">Archives</h4>
-              <ol class="list-unstyled mb-0">
-                <li><a href="#">March 2021</a></li>
-                <li><a href="#">February 2021</a></li>
-                <li><a href="#">January 2021</a></li>
-                <li><a href="#">December 2020</a></li>
-                <li><a href="#">November 2020</a></li>
-                <li><a href="#">October 2020</a></li>
-                <li><a href="#">September 2020</a></li>
-                <li><a href="#">August 2020</a></li>
-                <li><a href="#">July 2020</a></li>
-                <li><a href="#">June 2020</a></li>
-                <li><a href="#">May 2020</a></li>
-                <li><a href="#">April 2020</a></li>
-              </ol>
-            </div>
-
-
+          <div class="p-4">
+            <h4 class="fst-italic">Elsewhere</h4>
+            <ol class="list-unstyled">
+              <li><a href="#">GitHub</a></li>
+              <li><a href="#">Twitter</a></li>
+              <li><a href="#">Facebook</a></li>
+            </ol>
           </div>
         </div>
       </div>
     </main>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
-    integrity="sha384-oBqDVmMz4fnFO9gybBogGzFy7IKFpFeTG3S4Ghlrp4CaEwC6M85C81IZP24rBP4h"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="/static/app.js"></script>
-  <script>
-    (function ($) {
-      $('.dropdown-submenu a.dropdown-toggle').on("click", function (e) {
-        if (!$(this).next('ul').hasClass('show')) {
-          $(this).parents('.dropdown-menu').first().find('.show').removeClass("show");
-        }
-        var $subMenu = $(this).next("ul");
-        $subMenu.toggleClass('show');
-
-        $(this).parents('li.nav-item.dropdown.show').on('hidden.bs.dropdown', function (e) {
-          $('.dropdown-submenu .show').removeClass("show");
-        });
-
-        return false;
-      });
-    })(jQuery);
-
-    const categories = ['Gündem', 'Teknoloji', 'Ev/Yaşam', 'Magazin', 'Diziler/Filmler', 'Astroloji/Burçlar', 'Eğitim/Kariyer', 'Para/Ekonomi', 'Güzellik/Bakım', 'Moda/Stil', 'Diğer'];
-
-    function populateCategories() {
-    
-      const dropdownCategories = document.getElementById('dropdown-categories');
-
-      categories.forEach(category => {
-    
-        // Dropdown'daki kategoriler
-        let dropdownItem = document.createElement('li');
-        dropdownItem.className = 'dropdown-item';
-        dropdownItem.innerHTML = `
-          <label>
-            <input type="checkbox" value="${category}"> ${category}
-          </label>`;
-        dropdownCategories.appendChild(dropdownItem);
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', populateCategories);
-
-    
-   
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-rk3Ow0trxcJ2VmgSTxWjNV5PPIjGhDmkTfru1sLqWcILOG8vBoqjK4PbcI6OXH1K" crossorigin="anonymous">
   </script>
+  <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
+  <script src="/static/app.js"></script>
 
+  <script>
+    // Handle "Create Post" button click
+    document.getElementById('createPostBtn').addEventListener('click', function () {
+      const createPostSection = document.getElementById('createPostSection');
+      createPostSection.style.display = createPostSection.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Handle "Create Post" form submission
+    document.getElementById('createPostForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const postTitle = document.getElementById('postTitle').value;
+      const postContent = document.getElementById('postContent').value;
+      const postCategory = document.getElementById('postCategory').value;
+
+      // Create post element
+      const postElement = document.createElement('div');
+      postElement.classList.add('post');
+      postElement.innerHTML = `
+        <h2>${postTitle}</h2>
+        <p>${postContent}</p>
+        <p><strong>Category:</strong> ${postCategory}</p>
+      `;
+
+      // Add post to container
+      document.getElementById('postsContainer').appendChild(postElement);
+
+      // Clear form
+      document.getElementById('createPostForm').reset();
+
+      // Hide "Create Post" section
+      document.getElementById('createPostSection').style.display = 'none';
+    });
+
+    // Handle login form submission
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      // Simulate login process
+      console.log('Logging in with email:', email, 'and password:', password);
+
+      // Hide modal
+      $('#signInModal').modal('hide');
+    });
+
+    // Handle sign-up form submission
+    document.getElementById('signUpForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const username = document.getElementById('signUpUsername').value;
+      const email = document.getElementById('signUpEmail').value;
+      const password = document.getElementById('signUpPassword').value;
+
+      // Simulate sign-up process
+      console.log('Signing up with username:', username, 'email:', email, 'and password:', password);
+
+      // Hide modal
+      $('#signUpModal').modal('hide');
+    });
+
+    // Handle sign-out button click
+    document.getElementById('signOutButton').addEventListener('click', function () {
+      // Simulate sign-out process
+      console.log('Signing out');
+
+      // Hide sign-out button and show sign-in and sign-up buttons
+      document.getElementById('signOutButton').style.display = 'none';
+      document.getElementById('signInButton').style.display = 'block';
+      document.getElementById('signUpButton').style.display = 'block';
+    });
+
+  </script>
 </body>
 
 </html>

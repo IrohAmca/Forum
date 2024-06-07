@@ -1,8 +1,23 @@
+
+function CheckCookie(){
+  var user_id =getCookie("user_id")
+  if (user_id) {
+    $('#signInButton').hide();
+    $('#signUpButton').hide();
+    $('#signOutButton').show();
+  }else{
+    $('#signInButton').show();
+    $('#signUpButton').show();
+    $('#signOutButton').hide();
+  }
+}
+CheckCookie();
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
   var email = document.getElementById('loginEmail').value;
   var password = document.getElementById('loginPassword').value;
+
   fetch('/login', {
     method: 'POST',
     headers: {
@@ -13,16 +28,8 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        $('#signInModal').modal('hide');
         alert(data.message);
-        $(document).ready(function() {
-          var userId = getCookie('user_id');
-          console.log(userId);
-          if (userId) {
-              $('#signInButton').hide();
-              $('#signUpButton').hide();
-          }
-      });
+        //location.reload();
       } else {
         alert('Error logging in user: ' + data.message);
       }
@@ -58,27 +65,195 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
     .then(response => response.json())
     .then(data => {
       console.log(data);
-      if (data.success) {
+      if (data.success) { // true
         $('#signUpModal').modal('hide');
         alert(data.message);
       } else {
-        alert("Error signing up user: " + data.error);
+        alert("Error signing up user: " + data.message);
       }
     })
     .catch(error => console.error('Error:', error));
 
 });
+document.getElementById('signOutButton').addEventListener('click', function () {
+  fetch('/sign-out', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        $('#signOutButton').hide(); // Gizleme ve görüntüleme işlemlerini dinamik olarak cookie üzerinden kontrol eden bir fonksiyon yazılabilir.
+        $('#signInButton').show();
+        $('#signUpButton').show();
+        alert(data.message);
+      } else {
+        alert("Error signing out: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+});
+
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
   if (parts.length == 2) return parts.pop().split(";").shift();
 }
 
+function deleteCookie(name) {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+// sign in - sign out ends
+
+//user profile
+
+document.getElementById('loginForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+  const username = document.getElementById('loginEmail').value;
+  showProfileIcon(username);
+  $('#signInModal').modal('hide');
+});
+
+document.getElementById('registerForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+  const username = document.getElementById('registerUsername').value;
+  showProfileIcon(username);
+  $('#signUpModal').modal('hide');
+});
+
+document.getElementById('signOutButton').addEventListener('click', function () {
+  document.getElementById('profileIconContainer').innerHTML = '';
+  document.getElementById('signInButton').style.display = 'block';
+  document.getElementById('signUpButton').style.display = 'block';
+  document.getElementById('signOutButton').style.display = 'none';
+});
+
+function showProfileIcon(username) {
+  const initial = username.charAt(0).toUpperCase();
+  const profileIconHTML = `
+    <div class="profile-icon">${initial}</div>
+  `;
+  document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
+  document.getElementById('signInButton').style.display = 'none';
+  document.getElementById('signUpButton').style.display = 'none';
+  document.getElementById('signOutButton').style.display = 'block';
+}
+
+//filter
+
+const posts = [
+  { id: 1, content: "Post about JavaScript", date: "2024-06-01", likes: 10 },
+  { id: 2, content: "Learning Python", date: "2024-06-02", likes: 20 },
+  { id: 3, content: "CSS Flexbox Guide", date: "2024-06-03", likes: 5 },
+  { id: 4, content: "HTML Basics", date: "2024-06-04", likes: 15 },
+  { id: 5, content: "Advanced React", date: "2024-06-05", likes: 8 }
+];
 
 
-//forum kısmı -- comment, like- dislike
 
-document.addEventListener('DOMContentLoaded', function () {
+
+function filterPosts() {
+  const keyword = document.getElementById('keyword').value.toLowerCase();
+  const sortBy = document.getElementById('sort-by').value;
+
+  let filteredPosts = posts.filter(post => 
+    post.content.toLowerCase().includes(keyword)
+  );
+
+  if (sortBy === 'date-asc') {
+    filteredPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
+  } else if (sortBy === 'date-desc') {
+    filteredPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } else if (sortBy === 'likes-asc') {
+    filteredPosts.sort((a, b) => a.likes - b.likes);
+  } else if (sortBy === 'likes-desc') {
+    filteredPosts.sort((a, b) => b.likes - a.likes);
+  }
+
+  renderPosts(filteredPosts);
+}
+
+function renderPosts(posts) {
+  const postsList = document.getElementById('posts');
+  postsList.innerHTML = '';
+  
+  posts.forEach(post => {
+    const listItem = document.createElement('li');
+    listItem.className = 'list-group-item';
+    listItem.textContent = `${post.content} - Date: ${post.date} - Likes: ${post.likes}`;
+    postsList.appendChild(listItem);
+  });
+}
+
+// Initial render
+renderPosts(posts);
+
+// post - forum starts
+
+function getAllPosts() {
+  fetch('/get-posts', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        var posts = data.posts;
+        posts.forEach(post => {
+          var newPost = document.createElement('article');
+          newPost.classList.add('post');
+          newPost.innerHTML = '<h2 class="blog-post-title">' + post.Title + '</h2><p class="blog-post-meta">'+post.CreatedAt +' by <a href="#">' + post.Username + '</a></p><p>' + post.Content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+
+          var postList = document.querySelector('.post-list');
+          postList.prepend(newPost);
+        });
+      } else {
+        alert("Error getting posts: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+getAllPosts();
+
+document.getElementById('postForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+
+  var title = document.getElementById('postTitle').value;
+  var content = document.getElementById('postContent').value;
+
+  fetch('/create-post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ title: title, content: content })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert("Error creating post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+});
+
+
+
+
+
+
+
+//benim post kısmı 
+
+/* document.addEventListener('DOMContentLoaded', function () {
   function updateCount(button, countClass, increment) {
     var countElement = button.querySelector(countClass);
     var count = parseInt(countElement.textContent);
@@ -157,102 +332,5 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('addPostButton').addEventListener('click', function () {
   addNewPost();
 });
-
-
-
-// filter
-
-// Filtreleme Fonksiyonu
-document.addEventListener('DOMContentLoaded', function () {
-  // Kategori filtrelerini işle
-  var categoryFilters = document.querySelectorAll('.category-filter');
-  categoryFilters.forEach(function (filter) {
-    filter.addEventListener('change', function () {
-      // Seçilen kategorileri al
-      var selectedCategories = Array.from(categoryFilters)
-        .filter(function (checkbox) { return checkbox.checked; })
-        .map(function (checkbox) { return checkbox.value; });
-      console.log(selectedCategories); // Seçilen kategorileri konsola yazdır
-      // Seçilen kategorilere göre işlem yapmak için bu bilgiyi kullanabilirsiniz
-    });
-  });
-
-  // Likes ve Dates filtrelerini işle
-  var filterTypeRadios = document.querySelectorAll('input[name="filterType"]');
-  filterTypeRadios.forEach(function (radio) {
-    radio.addEventListener('change', function () {
-      var filterType = this.value; // Seçilen filtre türünü al
-      console.log(filterType); // Seçilen filtreyi konsola yazdır
-      // Seçilen filtreye göre işlem yapmak için bu bilgiyi kullanabilirsiniz
-    });
-  });
-});
-
-
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Handle sign-in form submission
-  document.getElementById('loginForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    // AJAX request for sign-in
-    fetch('/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email: email, password: password })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('signInModal').classList.remove('show');
-          document.getElementById('user-content').style.display = 'block';
-          document.getElementById('user-email').textContent = data.email;
-        } else {
-          alert('Invalid email or password');
-        }
-      })
-      .catch(error => console.error('Error:', error));
-  });
-
-  // Handle sign-up form submission
-  document.getElementById('signUpForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('signUpEmail').value;
-    const password = document.getElementById('signUpPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    if (password !== confirmPassword) {
-      document.getElementById('passwordHelpBlock').innerText = "Passwords don't match!";
-      return;
-    }
-
-    // AJAX request for sign-up
-    fetch('/sign-up', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name: name, email: email, password: password })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('signUpModal').classList.remove('show');
-          alert('Sign-up successful. Please sign in.');
-        } else {
-          alert('Error during sign-up: ' + data.message);
-        }
-      })
-      .catch(error => console.error('Error:', error));
-  });
-});
-
-
-//forum postu koruma 
-
+*/
 
