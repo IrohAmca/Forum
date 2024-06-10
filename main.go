@@ -13,9 +13,13 @@ func main() {
 	r.Static("/static", "./static")
 	r.Static("/png", "./png")
 	r.Static("/assets", "./assets")
-	
+
 	r.GET("/", func(c *gin.Context) {
 		c.File("templates/index.html")
+	})
+	r.GET("/get-databyid", getinformation)
+	r.GET("/profile", func(c *gin.Context) {
+		c.File("templates/userProfile.html")
 	})
 	r.GET("/get-posts", getPosts)
 	r.POST("/sign-out", func(c *gin.Context) {

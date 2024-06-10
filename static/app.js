@@ -1,3 +1,26 @@
+document.addEventListener("DOMContentLoaded", () => {
+  fetch('/get-databyid')
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              const postsContainer = document.getElementById('posts');
+              data.data.forEach(post => {
+                  const postElement = document.createElement('div');
+                  postElement.classList.add('post');
+                  postElement.innerHTML = `
+                      <h2>Post ID: ${post.PostID}</h2>
+                      <p>Thread ID: ${post.ThreadID}</p>
+                      <p>Content: ${post.Content}</p>
+                      <p>Created At: ${post.CreatedAt}</p>
+                  `;
+                  postsContainer.appendChild(postElement);
+              });
+          } else {
+              alert('Failed to load posts: ' + data.message);
+          }
+      })
+      .catch(error => console.error('Error fetching posts:', error));
+});
 $('#signOutButton').hide();
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
@@ -24,6 +47,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
             $('#signInButton').hide();
             $('#signUpButton').hide();
             $('#signOutButton').show();
+            $('#profileButton').show();
           }
         });
       } else {
@@ -32,6 +56,8 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     })
     .catch(error => console.error('Error:', error));
 });
+
+
 
 document.getElementById('signUpForm').addEventListener('submit', function (event) {
   event.preventDefault();
@@ -81,6 +107,7 @@ document.getElementById('signOutButton').addEventListener('click', function () {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        $('#profileButton').hide();
         $('#signOutButton').hide(); // Gizleme ve görüntüleme işlemlerini dinamik olarak cookie üzerinden kontrol eden bir fonksiyon yazılabilir.
         $('#signInButton').show();
         $('#signUpButton').show();

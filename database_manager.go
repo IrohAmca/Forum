@@ -334,3 +334,41 @@ func getAllPosts() ([]Post, error) {
 	}
 	return posts, nil
 }
+
+type postById struct {
+	PostID    int
+	ThreadID  int
+	UserID    int
+	Content   string
+	CreatedAt string
+}
+
+func postDataByUserID(userID int) ([]postById, error) {
+	db, err := sql.Open("sqlite3", "databases/database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts WHERE UserID = ?", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []postById
+	for rows.Next() {
+		var post postById
+		err := rows.Scan(&post.PostID, &post.ThreadID, &post.UserID, &post.Content, &post.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
