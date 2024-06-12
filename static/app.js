@@ -13,8 +13,10 @@ function CheckToken() {
         $('#signInButton').hide();
         $('#signUpButton').hide();
         $('#signOutButton').show();
+        $('#postForm').show();
       }
       else {
+        $('#postForm').hide();
         $('#signOutButton').hide();
         $('#signInButton').show();
         $('#signUpButton').show();
@@ -183,6 +185,7 @@ function getAllPosts() {
     .then(data => {
       if (data.success) {
         var posts = data.posts;
+        console.log(posts);
         posts.forEach(post => {
           var newPost = document.createElement('article');
           newPost.classList.add('post');
@@ -192,8 +195,8 @@ function getAllPosts() {
             + post.CreatedAt +
             ' by <a href="#">'
             + post.Username +
-            '</a></p><p>' +
-            post.Content +
+            '</a></p><p>'
+            + post.Content +
             '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="writeComment(this)">Comment</button>'
             + getDeleteButtonHtml(post.UserToken, post.PostID) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
@@ -202,6 +205,24 @@ function getAllPosts() {
 
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
+
+          var comments = post.Comment;
+          console.log(comments);
+          comments.forEach(comment => {
+            var newComment = document.createElement('div');
+            newComment.classList.add('comment');
+            newComment.innerHTML = '<p class="blog-post-meta">'
+            + comment.CreatedAt +
+            ' by <a href="#">'
+            + comment.Username +
+            '</a></p><p>'
+            + comment.Content +
+            '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
+            + getDeleteButtonHtml(post.UserToken, comment.PostID) +
+            '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+
+            newPost.appendChild(newComment);
+          });
         });
       } else {
         alert("Error getting posts: " + data.message);
@@ -235,8 +256,6 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
     })
     .catch(error => console.error('Error:', error));
 });
-
-getAllPosts();
 
 document.getElementById('postForm').addEventListener('submit', function (event) {
   event.preventDefault();
