@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -14,7 +13,7 @@ func main() {
 	r.Static("/static", "./static")
 	r.Static("/png", "./png")
 	r.Static("/assets", "./assets")
-	
+
 	r.GET("/", func(c *gin.Context) {
 		c.File("templates/index.html")
 	})
@@ -29,5 +28,5 @@ func main() {
 	r.POST("/login", login)
 	r.POST("/create-post", createPost)
 
-	r.Run("localhost:8080")
+	r.Run("localhost:8000")
 }

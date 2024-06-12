@@ -110,7 +110,7 @@ function deleteCookie(name) {
 
 //user profile
 
-document.getElementById('loginForm').addEventListener('submit', function (event) {
+/*document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
   const username = document.getElementById('loginEmail').value;
   showProfileIcon(username);
@@ -140,7 +140,7 @@ function showProfileIcon(username) {
   document.getElementById('signInButton').style.display = 'none';
   document.getElementById('signUpButton').style.display = 'none';
   document.getElementById('signOutButton').style.display = 'block';
-}
+}*/
 
 //filter
 
@@ -151,9 +151,6 @@ const posts = [
   { id: 4, content: "HTML Basics", date: "2024-06-04", likes: 15 },
   { id: 5, content: "Advanced React", date: "2024-06-05", likes: 8 }
 ];
-
-
-
 
 function filterPosts() {
   const keyword = document.getElementById('keyword').value.toLowerCase();
@@ -247,90 +244,4 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
 
 
 
-
-
-
-
-//benim post kısmı 
-
-/* document.addEventListener('DOMContentLoaded', function () {
-  function updateCount(button, countClass, increment) {
-    var countElement = button.querySelector(countClass);
-    var count = parseInt(countElement.textContent);
-    countElement.textContent = count + increment;
-  }
-
-  window.likePost = function (button) {
-    updateCount(button, '.like-count', 1);
-  };
-
-  window.dislikePost = function (button) {
-    updateCount(button, '.dislike-count', 1);
-  };
-
-  window.replyPost = function (button) {
-    var replyForm = button.closest('.post').querySelector('.reply-form');
-    replyForm.style.display = 'block';
-  };
-
-  window.submitComment = function (button) {
-    var replyForm = button.closest('.reply-form');
-    var commentText = replyForm.querySelector('input').value;
-    var newComment = document.createElement('div');
-    newComment.classList.add('comment');
-    newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="/png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
-    replyForm.insertAdjacentElement('afterend', newComment);
-    replyForm.style.display = 'none';
-  };
-
-  window.likeComment = function (button) {
-    updateCount(button, '.like-count', 1);
-  };
-
-  window.dislikeComment = function (button) {
-    updateCount(button, '.dislike-count', 1);
-  };
-
-  window.replyComment = function (button) {
-    var comment = button.closest('.comment');
-    var replyForm = comment.querySelector('.reply-form');
-    replyForm.style.display = 'block';
-  };
-
-  window.submitReply = function (button) {
-    var replyForm = button.closest('.reply-form');
-    var replyText = replyForm.querySelector('input').value;
-    var newReply = document.createElement('div');
-    newReply.classList.add('comment');
-    newReply.innerHTML = '<p>' + replyText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="/png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button><button class="delete-btn" onclick="deleteComment(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
-    replyForm.insertAdjacentElement('afterend', newReply);
-    replyForm.style.display = 'none';
-  };
-
-  window.deletePost = function (button) {
-    var post = button.closest('.post');
-    post.remove();
-  };
-
-  window.deleteComment = function (button) {
-    var comment = button.closest('.comment');
-    comment.remove();
-  };
-
-  window.createPost = function () {
-    var title = document.getElementById('new-post-title').value;
-    var content = document.getElementById('new-post-content').value;
-
-    var newPost = document.createElement('article');
-    newPost.classList.add('post');
-    newPost.innerHTML = '<h2 class="blog-post-title">' + title + '</h2><p class="blog-post-meta">January 1, 2021 by <a href="#">Mark</a></p><p>' + content + '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="/png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="/png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyPost(this)">Comment</button><button class="delete-btn" onclick="deletePost(this)">Sil</button></div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
-
-    var postList = document.querySelector('.post-list');
-    postList.prepend(newPost);
-  };
-});
-document.getElementById('addPostButton').addEventListener('click', function () {
-  addNewPost();
-});
-*/
-
+ 
