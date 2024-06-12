@@ -3,47 +3,8 @@ package main
 import (
 	"net/http"
 	"strconv"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 )
-
-func find_catagory(c *gin.Context) {
-	var post struct {
-		Content string `form:"email" binding:"required"`
-	}
-	if err := c.ShouldBind(&post); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	content := strings.Split(post.Content, " ")
-	for _, word := range content {
-		if strings.HasPrefix(word, "#") {
-			if word[1:] == "sports" {
-				//
-			}
-			if word[1:] == "politics" {
-				//
-			}
-			if word[1:] == "technology" {
-				//
-			}
-			if word[1:] == "entertainment" {
-				//
-			}
-			if word[1:] == "food" {
-				//
-			}
-			if word[1:] == "travel" {
-				//
-			}
-			if word[1:] == "fashion" {
-				//
-			}
-		}
-	}
-}
 
 func createPost(c *gin.Context) {
 	var post struct {
@@ -127,14 +88,15 @@ func createComment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	err = insertComment(userID,postID, comment.Content)
+	err = insertComment(userID, postID, comment.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment created successfully"})
 }
-func deleteComment(c *gin.Context){
+
+func deleteComment(c *gin.Context) {
 	var comment struct {
 		CommentID string `json:"CommentID" binding:"required"`
 	}

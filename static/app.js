@@ -1,3 +1,5 @@
+CheckToken();
+getAllPosts();
 function CheckToken() {
   var token = getCookie('token');
   fetch('/check-token', {
@@ -24,7 +26,15 @@ function CheckToken() {
     })
     .catch(error => console.error('Error:', error));
 }
-CheckToken();
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
+}
+
+function deleteCookie(name) {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
@@ -141,6 +151,12 @@ function getDeletePostButtonHtml(postToken, PostID) {
   }
   return '';
 }
+
+window.writeComment = function (button) {
+  var replyForm = button.closest('.post').querySelector('.reply-form');
+  replyForm.style.display = 'block';
+};
+
 function DeleteComment(CommentID) {
   fetch('/delete-comment', {
     method: 'POST',
@@ -160,23 +176,18 @@ function DeleteComment(CommentID) {
     )
     .catch(error => console.error('Error:', error));
 }
+
 function getDeleteCommentButtonHtml(commentToken, CommentID) {
   var token = getCookie('token');
 
   if (token == commentToken) {
-    return '<button class="delete-btn" onclick="deleteComment(\'' + CommentID + '\')">Delete</button>';
+    return '<button class="delete-btn" onclick="DeleteComment(\'' + CommentID + '\')">Delete</button>';
   }
   return '';
 }
-window.writeComment = function (button) {
-  var replyForm = button.closest('.post').querySelector('.reply-form');
-  replyForm.style.display = 'block';
-};
-
 window.submitComment = function (button) {
   var replyForm = button.closest('.reply-form');
   var commentText = replyForm.querySelector('input').value;
-  var newComment = document.createElement('div');
   var postId = replyForm.closest('.post').dataset.postId;
 
   fetch('/create-comment', {
@@ -195,10 +206,6 @@ window.submitComment = function (button) {
       }
     })
     .catch(error => console.error('Error:', error));
-  newComment.classList.add('comment');
-  newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button>' + getDeleteButtonHtml(post.UserToken, post.PostID) + '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
-  replyForm.insertAdjacentElement('afterend', newComment);
-  replyForm.style.display = 'none';
   location.reload();  
 };
 
@@ -246,7 +253,7 @@ function getAllPosts() {
             '</a></p><p>'
             + comment.Content +
             '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
-            + getDeleteCommentButtonHtml(post.UserToken, comment.PostID) +
+            + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
             newPost.appendChild(newComment);
@@ -258,32 +265,6 @@ function getAllPosts() {
     })
     .catch(error => console.error('Error:', error));
 }
-
-getAllPosts();
-
-document.getElementById('postForm').addEventListener('submit', function (event) {
-  event.preventDefault();
-
-  var title = document.getElementById('postTitle').value;
-  var content = document.getElementById('postContent').value;
-
-  fetch('/create-post', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ title: title, content: content })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        location.reload();
-      } else {
-        alert("Error creating post: " + data.message);
-      }
-    })
-    .catch(error => console.error('Error:', error));
-});
 
 document.getElementById('postForm').addEventListener('submit', function (event) {
   event.preventDefault();
