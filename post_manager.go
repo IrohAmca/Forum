@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -116,4 +118,37 @@ func deleteComment(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment deleted successfully"})
+}
+func likedislikepost(c *gin.Context) {
+	var like struct {
+		PostID string `json:"postID" binding:"required"`
+		Liked  bool   `json:"checker" binding:"required"`
+	}
+	if err := c.ShouldBind(&like); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+		return
+	}
+	postID, err := strconv.Atoi(like.PostID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
+		return
+	}
+	token := c.GetHeader("Authorization")
+	fmt.Println(token)
+	userID, err := Query_ID(token)
+	fmt.Println(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Unauthorized"})
+		return
+	}
+	action := LikeDislikeActions{
+		UserID: userID,
+		PostID: postID,
+		IsLike: like.Liked,
+	}
+	err = HandleLikeDislike(action)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
 }

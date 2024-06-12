@@ -18,7 +18,7 @@ func main() {
 		c.File("templates/index.html")
 	})
 	r.GET("/get-posts", getPosts)
-	
+
 	r.POST("/sign-out", func(c *gin.Context) {
 		c.SetCookie("token", "", -1, "/", "localhost", false, false)
 		c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
@@ -27,9 +27,10 @@ func main() {
 	r.POST("/delete-comment", deleteComment)
 	r.POST("/sign-up", SignUp)
 	r.POST("/login", login)
+	r.POST("/ld-post",likedislikepost)
 	r.POST("/create-post", createPost)
-	r.POST("check-token", UserChecker)
-	r.POST("delete-post", deletePost)
+	r.POST("/check-token", UserChecker)
+	r.POST("/delete-post", deletePost)
 	r.POST("/create-comment", createComment)
 
 	r.Run("localhost:8080")
