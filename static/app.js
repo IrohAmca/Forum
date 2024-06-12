@@ -133,11 +133,38 @@ function deletePost(PostID) {
     .catch(error => console.error('Error:', error));
 }
 
-function getDeleteButtonHtml(postToken, PostID) {
+function getDeletePostButtonHtml(postToken, PostID) {
   var token = getCookie('token');
 
   if (token == postToken) {
     return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')">Delete</button>';
+  }
+  return '';
+}
+function DeleteComment(CommentID) {
+  fetch('/delete-comment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ CommentID: CommentID })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert("Error deleting comment: " + data.message);
+      }
+    }
+    )
+    .catch(error => console.error('Error:', error));
+}
+function getDeleteCommentButtonHtml(commentToken, CommentID) {
+  var token = getCookie('token');
+
+  if (token == commentToken) {
+    return '<button class="delete-btn" onclick="deleteComment(\'' + CommentID + '\')">Delete</button>';
   }
   return '';
 }
@@ -172,6 +199,7 @@ window.submitComment = function (button) {
   newComment.innerHTML = '<p>' + commentText + '</p><div class="buttons"><button class="like-dislike-btn" onclick="likeComment(this)"><img src="/png/dislike.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikeComment(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="replyComment(this)">Reply</button>' + getDeleteButtonHtml(post.UserToken, post.PostID) + '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a reply..."><button class="btn btn-primary" onclick="submitReply(this)">Submit</button></div>';
   replyForm.insertAdjacentElement('afterend', newComment);
   replyForm.style.display = 'none';
+  location.reload();  
 };
 
 function getAllPosts() {
@@ -198,7 +226,7 @@ function getAllPosts() {
             '</a></p><p>'
             + post.Content +
             '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="writeComment(this)">Comment</button>'
-            + getDeleteButtonHtml(post.UserToken, post.PostID) +
+            + getDeletePostButtonHtml(post.UserToken, post.PostID) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
           newPost.dataset.postId = post.PostID;
@@ -218,7 +246,7 @@ function getAllPosts() {
             '</a></p><p>'
             + comment.Content +
             '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
-            + getDeleteButtonHtml(post.UserToken, comment.PostID) +
+            + getDeleteCommentButtonHtml(post.UserToken, comment.PostID) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
             newPost.appendChild(newComment);

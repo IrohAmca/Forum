@@ -492,3 +492,19 @@ func insertComment(userID, postID int, content string) error {
 	return nil
 
 }
+
+func deleteCommentFromDB(CommentID int) error {
+	statement, err := user_db.Prepare("DELETE FROM Comments WHERE CommentID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(CommentID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+	return nil
+}

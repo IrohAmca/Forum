@@ -134,3 +134,24 @@ func createComment(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment created successfully"})
 }
+func deleteComment(c *gin.Context){
+	var comment struct {
+		CommentID string `json:"CommentID" binding:"required"`
+	}
+	if err := c.ShouldBind(&comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+		return
+	}
+	commentID, err := strconv.Atoi(comment.CommentID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid CommentID"})
+		return
+	}
+	err = deleteCommentFromDB(commentID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment deleted successfully"})
+}

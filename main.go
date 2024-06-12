@@ -23,7 +23,7 @@ func main() {
 		c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
 		c.Redirect(302, "/")
 	})
-
+	r.POST("/delete-comment", deleteComment)
 	r.POST("/sign-up", SignUp)
 	r.POST("/login", login)
 	r.POST("/create-post", createPost)
