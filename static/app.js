@@ -110,7 +110,7 @@ function deleteCookie(name) {
 
 //user profile
 
-/*document.getElementById('loginForm').addEventListener('submit', function (event) {
+document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();
   const username = document.getElementById('loginEmail').value;
   showProfileIcon(username);
@@ -125,22 +125,28 @@ document.getElementById('registerForm').addEventListener('submit', function (eve
 });
 
 document.getElementById('signOutButton').addEventListener('click', function () {
-  document.getElementById('profileIconContainer').innerHTML = '';
-  document.getElementById('signInButton').style.display = 'block';
-  document.getElementById('signUpButton').style.display = 'block';
-  document.getElementById('signOutButton').style.display = 'none';
+  resetProfileIcon();
 });
 
+// Function to show profile icon and make it clickable
 function showProfileIcon(username) {
   const initial = username.charAt(0).toUpperCase();
   const profileIconHTML = `
-    <div class="profile-icon">${initial}</div>
+    <a href="userprofile.html" class="profile-icon">${initial}</a>
   `;
   document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
   document.getElementById('signInButton').style.display = 'none';
   document.getElementById('signUpButton').style.display = 'none';
   document.getElementById('signOutButton').style.display = 'block';
-}*/
+}
+
+// Function to reset profile icon to initial state
+function resetProfileIcon() {
+  document.getElementById('profileIconContainer').innerHTML = '';
+  document.getElementById('signInButton').style.display = 'block';
+  document.getElementById('signUpButton').style.display = 'block';
+  document.getElementById('signOutButton').style.display = 'none';
+}
 
 //filter
 

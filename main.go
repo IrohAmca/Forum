@@ -28,5 +28,10 @@ func main() {
 	r.POST("/login", login)
 	r.POST("/create-post", createPost)
 
+	// Route to serve userprofile.html
+	r.GET("/userprofile", func(c *gin.Context) {
+		c.File("templates/userprofile.html")
+	})
+
 	r.Run("localhost:8000")
 }
