@@ -27,7 +27,7 @@ func main() {
 	r.POST("/delete-comment", deleteComment)
 	r.POST("/sign-up", SignUp)
 	r.POST("/login", login)
-	r.POST("/ld-post",likedislikepost)
+	r.POST("/ld_post",likeDislikePost)
 	r.POST("/create-post", createPost)
 	r.POST("/check-token", UserChecker)
 	r.POST("/delete-post", deletePost)

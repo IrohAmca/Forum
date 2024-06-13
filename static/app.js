@@ -114,12 +114,6 @@ document.getElementById('signOutButton').addEventListener('click', function () {
     .catch(error => console.error('Error:', error));
 });
 
-function getCookie(name) {
-  var value = "; " + document.cookie;
-  var parts = value.split("; " + name + "=");
-  if (parts.length == 2) return parts.pop().split(";").shift();
-}
-
 function deleteCookie(name) {
   document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
@@ -151,6 +145,35 @@ function getDeletePostButtonHtml(postToken, PostID) {
   }
   return '';
 }
+
+function ld_submit(PostID, isLike) {
+  fetch('/ld_post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ PostID: PostID, isLike: isLike })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+      } else {
+        alert("Error liking/disliking post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  location.reload();
+}
+
+function ld_post(PostToken, PostID, likes, dislikes) {
+  var token = getCookie('token');
+
+  if (token == PostToken) {
+    return '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_submit(\'' + PostID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">' + likes + '</span></button><button class="like-dislike-btn" onclick="ld_submit(\'' + PostID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">' + dislikes + '</span></button>';
+  }
+  return '';
+}
+
 
 window.writeComment = function (button) {
   var replyForm = button.closest('.post').querySelector('.reply-form');
@@ -206,7 +229,7 @@ window.submitComment = function (button) {
       }
     })
     .catch(error => console.error('Error:', error));
-  location.reload();  
+  location.reload();
 };
 
 function getAllPosts() {
@@ -220,7 +243,6 @@ function getAllPosts() {
     .then(data => {
       if (data.success) {
         var posts = data.posts;
-        console.log(posts);
         posts.forEach(post => {
           var newPost = document.createElement('article');
           newPost.classList.add('post');
@@ -231,9 +253,9 @@ function getAllPosts() {
             ' by <a href="#">'
             + post.Username +
             '</a></p><p>'
-            + post.Content +
-            '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="writeComment(this)">Comment</button>'
+            + post.Content
             + getDeletePostButtonHtml(post.UserToken, post.PostID) +
+            ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
           newPost.dataset.postId = post.PostID;
@@ -242,19 +264,18 @@ function getAllPosts() {
           postList.prepend(newPost);
 
           var comments = post.Comment;
-          console.log(comments);
           comments.forEach(comment => {
             var newComment = document.createElement('div');
             newComment.classList.add('comment');
             newComment.innerHTML = '<p class="blog-post-meta">'
-            + comment.CreatedAt +
-            ' by <a href="#">'
-            + comment.Username +
-            '</a></p><p>'
-            + comment.Content +
-            '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
-            + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
-            '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+              + comment.CreatedAt +
+              ' by <a href="#">'
+              + comment.Username +
+              '</a></p><p>'
+              + comment.Content +
+              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
+              + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
+              '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
             newPost.appendChild(newComment);
           });

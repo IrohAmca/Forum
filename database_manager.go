@@ -248,14 +248,14 @@ func getUserID(email string) (int, error) {
 	return id, nil
 }
 func insertPost(threadID, userID int, content string) error {
-	statement, err := user_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content) VALUES (?, ?, ?)")
+	statement, err := user_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(threadID, userID, content)
+	_, err = statement.Exec(threadID, userID, content, 0, 0)
 	if err != nil {
 		log.Println("Error executing statement,", err)
 		return err
@@ -333,6 +333,8 @@ type Post struct {
 	Username  string
 	Content   string
 	CreatedAt string
+	LikeCounter int
+	DislikeCounter int
 	Comment   []Comment
 }
 
@@ -384,7 +386,7 @@ func getCommentsByPostID(postID int) ([]Comment, error) {
 }
 func getAllPosts() ([]Post, error) {
 	posts := []Post{}
-	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts")
+	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts")
 	if err != nil {
 		log.Println("Error querying data:", err)
 		return nil, err
@@ -395,7 +397,8 @@ func getAllPosts() ([]Post, error) {
 		var postID, threadID, userID int
 		var content string
 		var createdAt time.Time
-		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt)
+		var likes, dislikes int
+		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt, &likes, &dislikes)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -412,6 +415,8 @@ func getAllPosts() ([]Post, error) {
 			Content:   content,
 			UserToken: userToken,
 			Username:  username,
+			LikeCounter: likes,
+			DislikeCounter: dislikes,
 			CreatedAt: createdAt.Format("2006-01-02 15:04:05"),
 		}
 		posts = append(posts, post)
@@ -524,7 +529,7 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 	var currentID int
 	var currentIsLike bool
 
-	//check if the user has already liked or disliked this post.
+	// Kullanıcının bu postu daha önce like/dislike edip etmediğini kontrol et
 	err := user_db.QueryRow(`SELECT ID, IsLike FROM LikesDislikes WHERE UserID = ? AND PostID = ?`, action.UserID, action.PostID).Scan(&currentID, &currentIsLike)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -532,54 +537,53 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 	}
 
 	if err == sql.ErrNoRows {
-		// if there is no record, insert a new record.
+		// Kayıt yoksa, yeni bir kayıt ekle
 		_, err = user_db.Exec(`INSERT INTO LikesDislikes (UserID, PostID, IsLike) VALUES (?,?,?) `, action.UserID, action.PostID, action.IsLike)
 		if err != nil {
 			return fmt.Errorf("insert error: %v", err)
 		}
 
 		if action.IsLike {
-			_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes +1 WHERE PostID = ?`, action.PostID)
-
+			_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes + 1 WHERE PostID = ?`, action.PostID)
 		} else {
-			_, err = user_db.Exec(`UPDATE Posts SET Dislike = Dislike +1 WHERE PostID = ?`, action.PostID)
+			_, err = user_db.Exec(`UPDATE Posts SET Dislikes = Dislikes + 1 WHERE PostID = ?`, action.PostID)
 		}
 		if err != nil {
 			return fmt.Errorf("update count error: %v", err)
 		}
-
 	} else {
-
 		if currentIsLike == action.IsLike {
-			_, err = user_db.Exec(`DELETE FROM  LikesDislikes WHERE ID`, currentID)
+			// Kullanıcı aynı işlemi tekrar yapıyorsa kaydı sil
+			_, err = user_db.Exec(`DELETE FROM LikesDislikes WHERE ID = ?`, currentID)
 			if err != nil {
 				return fmt.Errorf("delete error: %v", err)
 			}
+
 			if action.IsLike {
-				_, err = user_db.Exec(`UPDATE Post SET Likes = Likes -1 WHERE PostID =?`, action.PostID)
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes - 1 WHERE PostID = ?`, action.PostID)
 			} else {
-				_, err = user_db.Exec(`UPDATE Post SET Dislike = Dislike -1 WHERE PostID =?`, action.PostID)
+				_, err = user_db.Exec(`UPDATE Posts SET Dislikes = Dislikes - 1 WHERE PostID = ?`, action.PostID)
 			}
 
 			if err != nil {
 				return fmt.Errorf("update count error: %v", err)
 			}
 		} else {
-			_, err = user_db.Exec(`UPDATE LikesDislikes SET IsLike = ? WHERE ID =?`, action.IsLike, currentID)
+			_, err = user_db.Exec(`UPDATE LikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
 			if err != nil {
 				return fmt.Errorf("update error: %v", err)
 			}
 
 			if action.IsLike {
-				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes +1, Dislike = Dislike-1 WHERE ID =?`, action.PostID)
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes + 1, Dislikes = Dislikes - 1 WHERE PostID = ?`, action.PostID)
 			} else {
-				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes -1, Dislike = Dislike +1 WHERE ID =?`, action.PostID)
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes - 1, Dislikes = Dislikes + 1 WHERE PostID = ?`, action.PostID)
 			}
+
 			if err != nil {
 				return fmt.Errorf("update count error: %v", err)
 			}
 		}
-
 	}
 	return nil
 }

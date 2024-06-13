@@ -119,13 +119,14 @@ func deleteComment(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment deleted successfully"})
 }
-func likedislikepost(c *gin.Context) {
+
+func likeDislikePost(c *gin.Context) {
 	var like struct {
-		PostID string `json:"postID" binding:"required"`
-		Liked  bool   `json:"checker" binding:"required"`
+		PostID string `json:"PostID" binding:"required"`
+		IsLike bool   `json:"isLike"`
 	}
-	if err := c.ShouldBind(&like); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+	if err := c.ShouldBindJSON(&like); err != nil { 
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
 		return
 	}
 	postID, err := strconv.Atoi(like.PostID)
@@ -133,22 +134,27 @@ func likedislikepost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	token := c.GetHeader("Authorization")
-	fmt.Println(token)
-	userID, err := Query_ID(token)
-	fmt.Println(userID)
+	token, err := c.Cookie("token")
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Unauthorized"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	userID, err := Query_ID(token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 	action := LikeDislikeActions{
 		UserID: userID,
 		PostID: postID,
-		IsLike: like.Liked,
+		IsLike: like.IsLike,
 	}
 	err = HandleLikeDislike(action)
+	fmt.Println(action)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Like/Dislike action successful"})
 }
+
