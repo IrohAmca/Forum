@@ -47,7 +47,7 @@ if (window.location.pathname === '/profile') {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
-    },body: JSON.stringify({ token: getCookie('token') })
+    }, body: JSON.stringify({ token: getCookie('token') })
   })
     .then(response => response.json())
     .then(data => {
@@ -290,6 +290,7 @@ function getAllPosts() {
         postList.innerHTML = '';
         var posts = data.posts;
         posts.forEach(post => {
+          const categories = post.Categories.map(cat => `<span class="badge bg-secondary">${cat}</span>`).join(' ');
           var newPost = document.createElement('article');
           newPost.classList.add('post');
           newPost.innerHTML = '<h2 class="blog-post-title">'
@@ -298,8 +299,8 @@ function getAllPosts() {
             + post.CreatedAt +
             ' by <a href="#">'
             + post.Username +
-            '</a></p><p>'
-            +'<p>'+post.Categories+'</p>'
+            '</a></p><p>' +
+            '<div class="post-categories">' + categories + '</div>'
             + post.Content
             + getDeletePostButtonHtml(post.UserToken, post.PostID) +
             ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter) +
