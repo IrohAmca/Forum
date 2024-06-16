@@ -99,7 +99,12 @@ func UserChecker(c *gin.Context) {
 		return
 	}
 	if checkToken(user.Token) {
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid"})
+		username ,err:= getUserName(user.Token)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username})
 		return
 	}else{
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})

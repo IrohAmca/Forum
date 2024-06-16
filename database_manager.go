@@ -455,7 +455,18 @@ func checkToken(token string) bool {
 	}
 	return true
 }
-
+func getUserName(token string) (string, error) {
+	var username string
+	row := user_db.QueryRow("SELECT Nickname FROM Users WHERE Token = ?", token)
+	err := row.Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no user with token %s", token)
+		}
+		return "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return username, nil
+}
 func deletePostFromDB(PostID int) error {
 	var threadID int
 	row := user_db.QueryRow("SELECT ThreadID FROM Posts WHERE PostID = ?", PostID)
