@@ -43,11 +43,13 @@ function checkToken() {
 }
 
 if (window.location.pathname === '/profile') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
   fetch('/get-user-info', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
-    }, body: JSON.stringify({ token: getCookie('token') })
+    }, body: JSON.stringify({ token: token })
   })
     .then(response => response.json())
     .then(data => {
@@ -158,13 +160,17 @@ function deletePost(PostID) {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        location.reload();
+        var postElement = document.querySelector(`[data-post-id="${PostID}"]`);
+        if (postElement) {
+          postElement.remove();
+        }
       } else {
         alert("Error deleting post: " + data.message);
       }
     })
     .catch(error => console.error('Error:', error));
 }
+
 function getDeletePostButtonHtml(postToken, PostID) {
   var token = getCookie('token');
 
@@ -286,9 +292,8 @@ function getAllPosts() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        var postList = document.querySelector('.post-list');
-        postList.innerHTML = '';
         var posts = data.posts;
+        console.log(posts);
         posts.forEach(post => {
           const categories = post.Categories.map(cat => `<span class="badge bg-secondary">${cat}</span>`).join(' ');
           var newPost = document.createElement('article');
@@ -297,20 +302,19 @@ function getAllPosts() {
             + post.Title +
             '</h2><p class="blog-post-meta">'
             + post.CreatedAt +
-            ' by <a href="#">'
-            + post.Username +
+            '<a href="/profile?token=' + post.UserToken + '">'
+            + " " + post.Username +
             '</a></p><p>' +
             '<div class="post-categories">' + categories + '</div>'
-            + post.Content
+            + post.Content +
+            '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="writeComment(this)">Comment</button>'
             + getDeletePostButtonHtml(post.UserToken, post.PostID) +
-            ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter) +
             '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
-
           newPost.dataset.postId = post.PostID;
-
+          var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
-
           var comments = post.Comment;
+          console.log(comments);
           comments.forEach(comment => {
             var newComment = document.createElement('div');
             newComment.classList.add('comment');
@@ -344,8 +348,7 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
 
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
-  }
-  );
+  });
 
   fetch('/create-post', {
     method: 'POST',
@@ -357,10 +360,33 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        location.reload();
+        // 
+        const post = data.post;
+        var postList = document.querySelector('.post-list');
+        var newPost = document.createElement('article');
+        newPost.classList.add('post');
+        newPost.dataset.postId = post.PostID;
+        const categories = post.Categories.map(cat => `<span class="badge bg-secondary">${cat}</span>`).join(' ');
+        newPost.innerHTML = `
+          <h2 class="blog-post-title">${post.Title}</h2>
+          <p class="blog-post-meta">${post.CreatedAt} <a href="/profile?token=${post.UserToken}">${post.Username}</a></p>
+          <div class="post-categories">${categories}</div>
+          <p>${post.Content}</p>
+          ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
+          ${ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter)}
+          <div class="reply-form" style="display:none;">
+            <input type="text" class="form-control" placeholder="Write a comment...">
+            <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
+          </div>
+        `;
+        postList.prepend(newPost);
+        document.getElementById('postTitle').value = '';
+        document.getElementById('postContent').value = '';
+        checkboxes.forEach(checkbox => checkbox.checked = false);
       } else {
         alert("Error creating post: " + data.message);
       }
     })
     .catch(error => console.error('Error:', error));
 });
+
