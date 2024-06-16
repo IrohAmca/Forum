@@ -9,6 +9,29 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Comment struct {
+	CommentID int
+	UserID    int
+	PostID    int
+	Content   string
+	Username  string
+	CreatedAt string
+	UpdatedAt string
+}
+
+type Post struct {
+	PostID         int
+	ThreadID       int
+	Title          string
+	UserToken      string
+	Username       string
+	Content        string
+	CreatedAt      string
+	LikeCounter    int
+	DislikeCounter int
+	Comment        []Comment
+}
+
 var user_db *sql.DB
 
 func createDatabase() {
@@ -96,34 +119,6 @@ func Query_email(email string) (string, error) {
 		return "", fmt.Errorf("error scanning row: %v", err)
 	}
 	return password, nil
-}
-
-func check_email(email string) bool {
-	row := user_db.QueryRow("SELECT Email FROM Users WHERE Email = ?", email)
-	err := row.Scan(&email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return true
-		}
-	}
-	if email == "" {
-		return true
-	}
-	return false
-}
-
-func check_username(username string) bool {
-	row := user_db.QueryRow("SELECT Nickname FROM Users WHERE Nickname = ?", username)
-	err := row.Scan(&username)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false
-		}
-	}
-	if username == "" {
-		return false
-	}
-	return true
 }
 
 func Query_username(email string) (string, error) {
@@ -235,18 +230,6 @@ func insertUser(username, email, password, token string) error {
 	fmt.Println("Data inserted successfully.")
 	return nil
 }
-func getUserID(email string) (int, error) {
-	var id int
-	row := user_db.QueryRow("SELECT UserID FROM Users WHERE Email = ?", email)
-	err := row.Scan(&id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("no user with email %s", email)
-		}
-		return 0, fmt.Errorf("error scanning row: %v", err)
-	}
-	return id, nil
-}
 func category2ID(categories []string) ([]string, error) {
 	var ids []string
 	dict := map[string]string{
@@ -341,29 +324,6 @@ func WriteAllData() {
 		}
 		fmt.Printf("ID: %d, Username: %s, Email: %s, Password: %s\n", id, username, email, password)
 	}
-}
-
-type Comment struct {
-	CommentID int
-	UserID    int
-	PostID    int
-	Content   string
-	Username  string
-	CreatedAt string
-	UpdatedAt string
-}
-
-type Post struct {
-	PostID         int
-	ThreadID       int
-	Title          string
-	UserToken      string
-	Username       string
-	Content        string
-	CreatedAt      string
-	LikeCounter    int
-	DislikeCounter int
-	Comment        []Comment
 }
 
 func getCommentsByPostID(postID int) ([]Comment, error) {
@@ -497,6 +457,14 @@ func checkToken(token string) bool {
 }
 
 func deletePostFromDB(PostID int) error {
+	var threadID int
+	row := user_db.QueryRow("SELECT ThreadID FROM Posts WHERE PostID = ?", PostID)
+	err := row.Scan(&threadID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return err
+	}
+
 	statement, err := user_db.Prepare("DELETE FROM Posts WHERE PostID = ?")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
@@ -505,6 +473,32 @@ func deletePostFromDB(PostID int) error {
 	defer statement.Close()
 
 	_, err = statement.Exec(PostID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+
+	statement, err = user_db.Prepare("DELETE FROM Comments WHERE PostID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(PostID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+
+	statement, err = user_db.Prepare("DELETE FROM Threads WHERE ThreadID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(threadID)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return err
@@ -547,9 +541,9 @@ func deleteCommentFromDB(CommentID int) error {
 }
 
 type LikeDislikeActions struct {
-	UserID int 
-	PostID int  
-	IsLike bool 
+	UserID int
+	PostID int
+	IsLike bool
 }
 
 func HandleLikeDislike(action LikeDislikeActions) error {
