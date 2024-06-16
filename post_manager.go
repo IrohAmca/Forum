@@ -10,8 +10,9 @@ import (
 
 func createPost(c *gin.Context) {
 	var post struct {
-		Title   string `json:"title" binding:"required"`
-		Content string `json:"content" binding:"required"`
+		Title      string   `json:"title" binding:"required"`
+		Content    string   `json:"content" binding:"required"`
+		Categories []string `json:"categories" binding:"required"`
 	}
 	if err := c.ShouldBind(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
@@ -27,7 +28,7 @@ func createPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	threadID, err := insertThread(userID, 0, post.Title)
+	threadID, err := insertThread(userID, post.Title, post.Categories)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -36,13 +37,41 @@ func createPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
 }
 
+func shortPost(short_type string, posts []Post) []Post {
+	if short_type != "" {
+		if short_type == "date-asc" {
+			fmt.Println("date-asc")
+			posts = sortByDateAsc(posts)
+		} else if short_type == "date-desc" {
+			fmt.Println("date-desc")
+			posts = sortByDateDesc(posts)
+		} else if short_type == "likes-asc" {
+			fmt.Println("likes-asc")
+			posts = sortByLikeAsc(posts)
+		} else if short_type == "likes-desc" {
+			fmt.Println("likes-desc")
+			posts = sortByLikeDesc(posts)
+		}
+	}
+	return posts
+}
 func getPosts(c *gin.Context) {
-	posts, err := getAllPosts()
+	var categories struct {
+		Categories []string `json:"categories"`
+		Title      string   `json:"title"`
+		Short_type string   `json:"short_type"`
+	}
+	if err := c.ShouldBind(&categories); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	post ,err :=getFilteredPosts(categories.Categories, categories.Title)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "posts": posts})
+	post = shortPost(categories.Short_type, post)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Posts retrieved successfully", "posts": post})
 }
 
 func deletePost(c *gin.Context) {
@@ -125,7 +154,7 @@ func likeDislikePost(c *gin.Context) {
 		PostID string `json:"PostID" binding:"required"`
 		IsLike bool   `json:"isLike"`
 	}
-	if err := c.ShouldBindJSON(&like); err != nil { 
+	if err := c.ShouldBindJSON(&like); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
 		return
 	}
@@ -150,11 +179,9 @@ func likeDislikePost(c *gin.Context) {
 		IsLike: like.IsLike,
 	}
 	err = HandleLikeDislike(action)
-	fmt.Println(action)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Like/Dislike action successful"})
 }
-

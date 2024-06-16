@@ -1,5 +1,14 @@
 CheckToken();
-getAllPosts();
+
+document.addEventListener('DOMContentLoaded', function () {
+  getAllPosts();
+
+  document.getElementById('search-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    getAllPosts();
+  });
+});
+
 function CheckToken() {
   var token = getCookie('token');
   fetch('/check-token', {
@@ -136,7 +145,6 @@ function deletePost(PostID) {
     })
     .catch(error => console.error('Error:', error));
 }
-
 function getDeletePostButtonHtml(postToken, PostID) {
   var token = getCookie('token');
 
@@ -212,13 +220,19 @@ window.submitComment = function (button) {
   var replyForm = button.closest('.reply-form');
   var commentText = replyForm.querySelector('input').value;
   var postId = replyForm.closest('.post').dataset.postId;
+  let selectedCategories = [];
+  let checkboxes = document.querySelectorAll('input[name="category"]:checked');
+
+  checkboxes.forEach((checkbox) => {
+    selectedCategories.push(checkbox.value);
+  });
 
   fetch('/create-comment', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ postId: postId, comment: commentText })
+    body: JSON.stringify({ postId: postId, comment: commentText, categories: selectedCategories })
   })
     .then(response => response.json())
     .then(data => {
@@ -233,16 +247,90 @@ window.submitComment = function (button) {
 };
 
 function getAllPosts() {
+  let selectedCategories = [];
+  let checkboxes = document.querySelectorAll('input[name="category"]:checked');
+
+  checkboxes.forEach((checkbox) => {
+    selectedCategories.push(checkbox.value);
+  });
+
+  title= document.getElementById('keyword').value;
+  short_type = document.getElementById('sort-by').value;
   fetch('/get-posts', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({ categories: selectedCategories,title: title, short_type: short_type})
   })
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        var postList = document.querySelector('.post-list');
+        postList.innerHTML = ''; 
         var posts = data.posts;
+        posts.forEach(post => {
+          var newPost = document.createElement('article');
+          newPost.classList.add('post');
+          newPost.innerHTML = '<h2 class="blog-post-title">'
+            + post.Title +
+            '</h2><p class="blog-post-meta">'
+            + post.CreatedAt +
+            ' by <a href="#">'
+            + post.Username +
+            '</a></p><p>'
+            + post.Content
+            + getDeletePostButtonHtml(post.UserToken, post.PostID) +
+            ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter) +
+            '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+
+          newPost.dataset.postId = post.PostID;
+
+          postList.prepend(newPost);
+
+          var comments = post.Comment;
+          comments.forEach(comment => {
+            var newComment = document.createElement('div');
+            newComment.classList.add('comment');
+            newComment.innerHTML = '<p class="blog-post-meta">'
+              + comment.CreatedAt +
+              ' by <a href="#">'
+              + comment.Username +
+              '</a></p><p>'
+              + comment.Content +
+              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
+              + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
+              '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+
+            newPost.appendChild(newComment);
+          });
+        });
+      } else {
+        alert("Error getting posts: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function filterPosts() {
+  let selectedCategories = [];
+  let checkboxes = document.querySelectorAll('input[name="category"]:checked');
+
+  checkboxes.forEach((checkbox) => {
+    selectedCategories.push(checkbox.value);
+  });
+  fetch('/filter-posts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ categories: selectedCategories })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        var posts = data.posts;
+        console.log(posts);
         posts.forEach(post => {
           var newPost = document.createElement('article');
           newPost.classList.add('post');
@@ -286,19 +374,25 @@ function getAllPosts() {
     })
     .catch(error => console.error('Error:', error));
 }
-
 document.getElementById('postForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
   var title = document.getElementById('postTitle').value;
   var content = document.getElementById('postContent').value;
+  var selectedCategories = [];
+  var checkboxes = document.querySelectorAll('input[name="category"]:checked');
+
+  checkboxes.forEach((checkbox) => {
+    selectedCategories.push(checkbox.value);
+  }
+  );
 
   fetch('/create-post', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ title: title, content: content })
+    body: JSON.stringify({ title: title, content: content, categories: selectedCategories })
   })
     .then(response => response.json())
     .then(data => {

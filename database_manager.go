@@ -55,15 +55,15 @@ func createDatabase() {
 				ThreadID INTEGER PRIMARY KEY AUTOINCREMENT,
 				Title TEXT NOT NULL,
 				UserID INTEGER,
-				CategoryID INTEGER,
+				CategoryIDs TEXT NOT NULL,
 				CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (UserID) REFERENCES Users(UserID),
-				FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+				FOREIGN KEY (CategoryIDs) REFERENCES Categories(CategoryIDs)
 			);`,
 		`CREATE TABLE IF NOT EXISTS Categories(
-				CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
-				CategoryName TEXT NOT NULL UNIQUE,
+				CategoryIDs TEXT PRIMARY KEY,
+				CategoryNames TEXT NOT NULL UNIQUE,
 				CategoryDescription TEXT 
 			);`,
 		`CREATE TABLE IF NOT EXISTS Comments (
@@ -247,6 +247,25 @@ func getUserID(email string) (int, error) {
 	}
 	return id, nil
 }
+func category2ID(categories []string) ([]string, error) {
+	var ids []string
+	dict := map[string]string{
+		`Gündem`:             "1",
+		`Ev&Yaşam`:           "2",
+		`Para&Ekonomi`:       "3",
+		`Moda&Stil`:          "4",
+		`İnternet&Teknoloji`: "5",
+		`Eğitim&Kariyer`:     "6",
+	}
+	for _, category := range categories {
+		id, ok := dict[category]
+		if !ok {
+			return nil, fmt.Errorf("no category with name %s", category)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
 func insertPost(threadID, userID int, content string) error {
 	statement, err := user_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
@@ -265,15 +284,24 @@ func insertPost(threadID, userID int, content string) error {
 	return nil
 }
 
-func insertThread(userID, categoryID int, title string) (int, error) {
-	statement, err := user_db.Prepare("INSERT INTO Threads (UserID, CategoryID, Title) VALUES (?, ?, ?)")
+func insertThread(userID int, title string, categories []string) (int, error) {
+	ids, err := category2ID(categories)
+	if err != nil {
+		return 0, err
+	}
+	categoryIDs := ""
+	for _, id := range ids {
+		categoryIDs += id + ","
+	}
+	categoryIDs = categoryIDs[:len(categoryIDs)-1]
+	statement, err := user_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return 0, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(userID, categoryID, title)
+	_, err = statement.Exec(userID, title, categoryIDs)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return 0, err
@@ -326,16 +354,16 @@ type Comment struct {
 }
 
 type Post struct {
-	PostID    int
-	ThreadID  int
-	Title     string
-	UserToken string
-	Username  string
-	Content   string
-	CreatedAt string
-	LikeCounter int
+	PostID         int
+	ThreadID       int
+	Title          string
+	UserToken      string
+	Username       string
+	Content        string
+	CreatedAt      string
+	LikeCounter    int
 	DislikeCounter int
-	Comment   []Comment
+	Comment        []Comment
 }
 
 func getCommentsByPostID(postID int) ([]Comment, error) {
@@ -410,14 +438,14 @@ func getAllPosts() ([]Post, error) {
 		}
 
 		post := Post{
-			PostID:    postID,
-			ThreadID:  threadID,
-			Content:   content,
-			UserToken: userToken,
-			Username:  username,
-			LikeCounter: likes,
+			PostID:         postID,
+			ThreadID:       threadID,
+			Content:        content,
+			UserToken:      userToken,
+			Username:       username,
+			LikeCounter:    likes,
 			DislikeCounter: dislikes,
-			CreatedAt: createdAt.Format("2006-01-02 15:04:05"),
+			CreatedAt:      createdAt.Format("2006-01-02 15:04:05"),
 		}
 		posts = append(posts, post)
 	}
@@ -519,9 +547,9 @@ func deleteCommentFromDB(CommentID int) error {
 }
 
 type LikeDislikeActions struct {
-	UserID int  // user that performing the action.
-	PostID int  // id of post that being like or dislike.
-	IsLike bool // true for like, false for dislike. bu struct kullanılacak ama nasıl?
+	UserID int 
+	PostID int  
+	IsLike bool 
 }
 
 func HandleLikeDislike(action LikeDislikeActions) error {
@@ -529,7 +557,6 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 	var currentID int
 	var currentIsLike bool
 
-	// Kullanıcının bu postu daha önce like/dislike edip etmediğini kontrol et
 	err := user_db.QueryRow(`SELECT ID, IsLike FROM LikesDislikes WHERE UserID = ? AND PostID = ?`, action.UserID, action.PostID).Scan(&currentID, &currentIsLike)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -537,7 +564,6 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 	}
 
 	if err == sql.ErrNoRows {
-		// Kayıt yoksa, yeni bir kayıt ekle
 		_, err = user_db.Exec(`INSERT INTO LikesDislikes (UserID, PostID, IsLike) VALUES (?,?,?) `, action.UserID, action.PostID, action.IsLike)
 		if err != nil {
 			return fmt.Errorf("insert error: %v", err)
@@ -553,7 +579,6 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 		}
 	} else {
 		if currentIsLike == action.IsLike {
-			// Kullanıcı aynı işlemi tekrar yapıyorsa kaydı sil
 			_, err = user_db.Exec(`DELETE FROM LikesDislikes WHERE ID = ?`, currentID)
 			if err != nil {
 				return fmt.Errorf("delete error: %v", err)
@@ -586,4 +611,201 @@ func HandleLikeDislike(action LikeDislikeActions) error {
 		}
 	}
 	return nil
+}
+func getFilteredPosts(categories []string, title string) ([]Post, error) {
+	var posts []Post
+
+	if len(categories) == 0 && title == "" {
+		return getAllPosts()
+	}
+
+	categoryPosts := make(map[int]Post)
+	if len(categories) > 0 {
+		ids, err := category2ID(categories)
+		if err != nil {
+			return nil, err
+		}
+		categoryIDs := ""
+		for _, id := range ids {
+			categoryIDs += id + ","
+		}
+		categoryIDs = categoryIDs[:len(categoryIDs)-1]
+
+		rows, err := user_db.Query("SELECT ThreadID FROM Threads WHERE CategoryIDs = ?", categoryIDs)
+		if err != nil {
+			log.Println("Error querying data:", err)
+			return nil, err
+		}
+		defer rows.Close()
+		var threadID int
+		for rows.Next() {
+			err := rows.Scan(&threadID)
+			if err != nil {
+				log.Println("Error scanning row:", err)
+				return nil, err
+			}
+			tempPosts, err := getPostByThreadID(threadID)
+			if err != nil {
+				log.Println("Error getting posts:", err)
+				return nil, err
+			}
+			for _, post := range tempPosts {
+				categoryPosts[post.PostID] = post
+			}
+		}
+	}
+	titlePosts := make(map[int]Post)
+	if title != "" {
+		rows, err := user_db.Query("SELECT ThreadID FROM Threads WHERE Title = ?", title)
+		if err != nil {
+			log.Println("Error querying data:", err)
+			return nil, err
+		}
+		defer rows.Close()
+		var threadID int
+		for rows.Next() {
+			err := rows.Scan(&threadID)
+			if err != nil {
+				log.Println("Error scanning row:", err)
+				return nil, err
+			}
+			tempPosts, err := getPostByThreadID(threadID)
+			if err != nil {
+				log.Println("Error getting posts:", err)
+				return nil, err
+			}
+			for _, post := range tempPosts {
+				titlePosts[post.PostID] = post
+			}
+		}
+	}
+	if len(categories) > 0 && title != "" {
+		for id, post := range categoryPosts {
+			if _, exists := titlePosts[id]; exists {
+				posts = append(posts, post)
+			}
+		}
+	} else if len(categories) > 0 {
+		for _, post := range categoryPosts {
+			posts = append(posts, post)
+		}
+	} else if title != "" {
+		for _, post := range titlePosts {
+			posts = append(posts, post)
+		}
+	}
+
+	return posts, nil
+}
+
+func getPostByThreadID(threadID int) ([]Post, error) {
+	posts := []Post{}
+	rows, err := user_db.Query("SELECT PostID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var postID, userID int
+		var content string
+		var createdAt time.Time
+		var likes, dislikes int
+		err := rows.Scan(&postID, &userID, &content, &createdAt, &likes, &dislikes)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		userToken, username, err := QueryTokenID(userID)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		post := Post{
+			PostID:         postID,
+			ThreadID:       threadID,
+			Content:        content,
+			UserToken:      userToken,
+			Username:       username,
+			LikeCounter:    likes,
+			DislikeCounter: dislikes,
+			CreatedAt:      createdAt.Format("2006-01-02 15:04:05"),
+		}
+		posts = append(posts, post)
+	}
+	fmt.Println("Posts:", posts)
+	for i, post := range posts {
+		rows, err = user_db.Query("SELECT Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		defer rows.Close()
+		rows.Next()
+		var title string
+		err := rows.Scan(&title)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		posts[i].Title = title
+	}
+
+	for i, post := range posts {
+		comments, err := getCommentsByPostID(post.PostID)
+		if err != nil {
+			log.Println("Error getting comments:", err)
+			return nil, err
+		}
+		if comments == nil {
+			comments = []Comment{}
+		} else {
+			posts[i].Comment = comments
+		}
+	}
+	return posts, nil
+}
+
+func sortByDateAsc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].CreatedAt > posts[j].CreatedAt {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByDateDesc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].CreatedAt < posts[j].CreatedAt {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByLikeAsc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].LikeCounter > posts[j].LikeCounter {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByLikeDesc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].LikeCounter < posts[j].LikeCounter {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
 }

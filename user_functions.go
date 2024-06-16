@@ -18,18 +18,6 @@ func hashPassword(password string) string {
 	}
 	return string(hashedPassword)
 }
-func getID(c *gin.Context) (string, error) {
-	token := c.GetHeader("Authorization")
-	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	if err != nil {
-		panic("Failed to parse token")
-	}
-	userID := claims["sub"].(string)
-	return userID, nil
-}
 func generateToken(username string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,
