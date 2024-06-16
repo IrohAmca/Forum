@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -26,6 +27,7 @@ type Post struct {
 	UserToken      string
 	Username       string
 	Content        string
+	Categories     []string
 	CreatedAt      string
 	LikeCounter    int
 	DislikeCounter int
@@ -372,6 +374,28 @@ func getCommentsByPostID(postID int) ([]Comment, error) {
 	return comments, nil
 
 }
+
+func getCategoriesByID(id string) ([]string, error) {
+	var categories []string
+	idList := strings.Split(id, ",")
+	dict := map[string]string{
+		"1": "Gündem",
+		"2": "Ev&Yaşam",
+		"3": "Para&Ekonomi",
+		"4": "Moda&Stil",
+		"5": "İnternet&Teknoloji",
+		"6": "Eğitim&Kariyer",
+	}
+	for _, id := range idList {
+		category, ok := dict[id]
+		if !ok {
+			return nil, fmt.Errorf("no category with id %s", id)
+		}
+		categories = append(categories, category)
+	}
+	return categories, nil
+}
+
 func getAllPosts() ([]Post, error) {
 	posts := []Post{}
 	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts")
@@ -411,14 +435,24 @@ func getAllPosts() ([]Post, error) {
 	}
 
 	for i, post := range posts {
-		rows, err = user_db.Query("SELECT Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
+		rows, err = user_db.Query("SELECT Title, CategoryIDs FROM Threads WHERE ThreadID = ?", post.ThreadID)
 		if err != nil {
 			log.Println("Error querying data:", err)
 		}
 		defer rows.Close()
 		rows.Next()
 		var title string
-		err := rows.Scan(&title)
+		var categoryIDs string
+		err := rows.Scan(&title, &categoryIDs)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		categories, err := getCategoriesByID(categoryIDs)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		posts[i].Categories = categories
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -432,9 +466,7 @@ func getAllPosts() ([]Post, error) {
 			log.Println("Error getting comments:", err)
 			return nil, err
 		}
-		if comments == nil {
-			comments = []Comment{}
-		} else {
+		if comments != nil {
 			posts[i].Comment = comments
 		}
 	}
@@ -762,9 +794,7 @@ func getPostByThreadID(threadID int) ([]Post, error) {
 			log.Println("Error getting comments:", err)
 			return nil, err
 		}
-		if comments == nil {
-			comments = []Comment{}
-		} else {
+		if comments != nil {
 			posts[i].Comment = comments
 		}
 	}

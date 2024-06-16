@@ -299,6 +299,7 @@ function getAllPosts() {
             ' by <a href="#">'
             + post.Username +
             '</a></p><p>'
+            +'<p>'+post.Categories+'</p>'
             + post.Content
             + getDeletePostButtonHtml(post.UserToken, post.PostID) +
             ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter) +
