@@ -111,3 +111,6 @@ func UserChecker(c *gin.Context) {
 		return
 	}
 }
+func getUserInfo(c *gin.Context){
+	// Subject to Sebahattin's implementation
+}

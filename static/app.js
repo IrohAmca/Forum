@@ -22,17 +22,36 @@ function checkToken() {
     .then(data => {
       if (data.success) {
         console.log(data.username);
+        const initial = data.username.charAt(0).toUpperCase();
+        const profileIconHTML = `
+          <a href="/profile" class="profile-icon">${initial}</a>
+        `;
+        document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
+        $('#profileIconContainer').show();
         $('#signInButton').hide();
         $('#signUpButton').hide();
         $('#signOutButton').show();
         $('#postForm').show();
-      }
-      else {
+      } else {
         $('#postForm').hide();
         $('#signOutButton').hide();
         $('#signInButton').show();
         $('#signUpButton').show();
       }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+if (window.location.pathname === '/profile') {
+  fetch('/get-user-info', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },body: JSON.stringify({ token: getCookie('token') })
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
     })
     .catch(error => console.error('Error:', error));
 }
