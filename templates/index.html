@@ -1,314 +1,301 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="auto">
+  <head>
+    <script src="../assets/js/color-modes.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
+    <meta name="generator" content="Hugo 0.122.0" />
+    <title>ZUMZUM.COM</title>
+    <link rel="icon" type="image/x-icon" href="../png/zumzum.png" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/blog/" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Playfair&#43;Display:700,900&amp;display=swap" rel="stylesheet" />
+    <link href="../static/blog.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
 
-<head>
-  <script src="../assets/js/color-modes.js"></script>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="">
-  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-  <meta name="generator" content="Hugo 0.122.0">  
-  <title>ZUMZUM.COM</title>
-  <link rel="icon" type="image/x-icon" href="../png/zumzum.png">
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/blog/">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css?family=Playfair&#43;Display:700,900&amp;display=swap" rel="stylesheet">
-  <link href="../static/blog.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
-  <style>
-    .bd-placeholder-img {
-      font-size: 1.125rem;
-      text-anchor: middle;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      user-select: none;
-    }
-
-    @media (min-width: 768px) {
-      .bd-placeholder-img-lg {
-        font-size: 3.5rem;
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
       }
-    }
-
-    .b-example-divider {
-      width: 100%;
-      height: 3rem;
-      background-color: rgba(0, 0, 0, .1);
-      border: solid rgba(0, 0, 0, .15);
-      border-width: 1px 0;
-      box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
-    }
-
-    .b-example-vr {
-      flex-shrink: 0;
-      width: 1.5rem;
-      height: 100vh;
-    }
-
-    .bi {
-      vertical-align: -.125em;
-      fill: currentColor;
-    }
-
-    .nav-scroller {
-      position: relative;
-      z-index: 2;
-      height: 2.75rem;
-      overflow-y: hidden;
-    }
-
-    .nav-scroller .nav {
-      display: flex;
-      flex-wrap: nowrap;
-      padding-bottom: 1rem;
-      margin-top: -1px;
-      overflow-x: auto;
-      text-align: center;
-      white-space: nowrap;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .btn-bd-primary {
-      --bd-violet-bg: #712cf9;
-      --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
-      --bs-btn-font-weight: 600;
-      --bs-btn-color: var(--bs-white);
-      --bs-btn-bg: var(--bd-violet-bg);
-      --bs-btn-border-color: var(--bd-violet-bg);
-      --bs-btn-hover-color: var(--bs-white);
-      --bs-btn-hover-bg: #6528e0;
-      --bs-btn-hover-border-color: #6528e0;
-      --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
-      --bs-btn-active-color: var(--bs-btn-hover-color);
-      --bs-btn-active-bg: #5a23c8;
-      --bs-btn-active-border-color: #5a23c8;
-    }
-
-    .bd-mode-toggle {
-      z-index: 1500;
-    }
-
-    .bd-mode-toggle .dropdown-menu .active .bi {
-      display: block !important;
-    }
-
-    .post,
-    .comment {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      position: relative;
-    }
-
-    .comment {
-      margin-left: 30px;
-    }
-
-    .buttons {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .buttons button {
-      margin-left: 10px;
-    }
-
-    .delete-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      color: red;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .like-dislike-btn img {
-      width: 20px;
-      height: 20px;
-      margin-right: 5px;
-    }
-
-    .dropdown-submenu {
-      position: relative;
-    }
-
-    .dropdown-submenu .dropdown-menu {
-      top: 0;
-      left: 100%;
-      margin-top: -1px;
-    }
-    .profile-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: #007bff;
-      color: white;
-      text-align: center;
-      line-height: 40px;
-      font-size: 18px;
-      margin-right: 10px;
-    }
-    
- 
-  </style>
-</head>
-
-<body>
-  <div class="container">
-    
-    <header class="border-bottom lh-1 py-3">
-      <div class="row flex-nowrap justify-content-between align-items-center"
-        style="margin-top:20px; margin-left: 10px;">
-        
-        <div class="col-6 text-center">
-          <img src="../png/zumzum.png" style="width: 63px; height: 63px; margin-right: 10px; margin-bottom: 20px;">
-          <a class="blog-header-logo text-body-emphasis text-decoration-none" href="#">ZUMZUM.COM</a>
-        </div>
-        
-
-        <div id="content" class="col-6 d-flex justify-content-end ">
-          <div id="profileIconContainer"></div>
-          <button id="signInButton" style="margin-right: 2rem;" class="btn btn-primary" data-toggle="modal"
-            data-target="#signInModal">
-            <img src="../png/user.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
-            Sign In
-          </button>
-          <button id="signUpButton" class="btn btn-primary" style="margin-right: 5rem;" data-toggle="modal"
-            data-target="#signUpModal">
-            <img src="../png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;">
-            Sign Up
-          </button>
-          <div id="profileIconContainer"></div>
-          <button id="signOutButton" class="btn btn-primary" style="display:none;">
-            <img src="../png/logout.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 2px;">
-            Sign Out
-          </button>
-
-          <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="signInModalLabel">Sign In</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <form id="loginForm">
-                    <div class="form-group">
-                      <label for="loginEmail">Email:</label>
-                      <input type="email" class="form-control" id="loginEmail" required>
-                    </div>
-                    <div class="form-group">
-                      <label for="loginPassword">Password:</label>
-                      <input type="password" class="form-control" id="loginPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Sign In</button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="signUpModalLabel">Sign Up</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <form id="signUpForm">
-                    <div class="form-group">
-                      <label for="signUpUsername">Name:</label>
-                      <input type="text" class="form-control" id="signUpUsername" required>
-                    </div>
-                    <div id="NameHelpBlock" class="form-text"></div>
-                    <div class="form-group">
-                      <label for="signUpEmail">Email:</label>
-                      <input type="email" class="form-control" id="signUpEmail" required>
-                    </div>
-                    <div id="EmailHelpBlock" class="form-text"></div>
-                    <div class="form-group">
-                      <label for="signUpPassword">Password:</label>
-                      <input type="password" class="form-control" id="signUpPassword" required>
-                    </div>
-
-                    <div class="form-group">
-                      <label for="confirmSignUpPassword">Confirm Password:</label>
-                      <input type="password" class="form-control" id="confirmSignUpPassword" required>
-                    </div>
-                    <div id="passwordHelpBlock" class="form-text"></div>
-                    <button type="submit" class="btn btn-secondary">Sign Up</button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div id="user-content" style="display:none;">
-            <h2>Welcome, <span id="user-email"></span>!</h2>
-          </div>
-        </div>
-      </div>
       
-    </header> 
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+      
+      .b-example-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, 0.1);
+        border: solid rgba(0, 0, 0, 0.15);
+        border-width: 1px 0;
+        box-shadow: inset 0 0.5em 1.5em rgba(0, 0, 0, 0.1), inset 0 0.125em 0.5em rgba(0, 0, 0, 0.15);
+      }
+      
+      .b-example-vr {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 100vh;
+      }
+      #profileIconContainer {
+        display: flex;
+        align-items: center;
+      }
+      .bi {
+        vertical-align: -0.125em;
+        fill: currentColor;
+      }
+      
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+      
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .btn-bd-primary {
+        --bd-violet-bg: #712cf9;
+        --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+        --bs-btn-font-weight: 600;
+        --bs-btn-color: var(--bs-white);
+        --bs-btn-bg: var(--bd-violet-bg);
+        --bs-btn-border-color: var(--bd-violet-bg);
+        --bs-btn-hover-color: var(--bs-white);
+        --bs-btn-hover-bg: #6528e0;
+        --bs-btn-hover-border-color: #6528e0;
+        --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #5a23c8;
+        --bs-btn-active-border-color: #5a23c8;
+      }
+      
+      .bd-mode-toggle {
+        z-index: 1500;
+      }
+      
+      .bd-mode-toggle .dropdown-menu .active .bi {
+        display: block !important;
+      }
+      
+      .post,
+      .comment {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        position: relative;
+      }
+      
+      .comment {
+        margin-left: 30px;
+      }
+      
+      .buttons {
+        display: flex;
+        justify-content: flex-end;
+      }
+      
+      .buttons button {
+        margin-left: 10px;
+      }
+      
+      .delete-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: red;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      
+      .like-dislike-btn img {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+      }
+      
+      .dropdown-submenu {
+        position: relative;
+      }
+      
+      .dropdown-submenu .dropdown-menu {
+        top: 0;
+        left: 100%;
+        margin-top: -1px;
+      }
+      .profile-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+        line-height: 40px;
+        font-size: 18px;
+        margin-right: 10px;
+      }
+      .post-categories {
+        margin-top: 10px;
+        font-size: 0.9em;
+        color: #666;
+      }
+    </style>
+  </head>
 
-    
+  <body>
+    <div class="container">
+      <header class="border-bottom lh-1 py-3">
+        <div class="row flex-nowrap justify-content-between align-items-center" style="margin-top:20px; margin-left: 10px;">
+          <div class="col-6 text-center">
+            <img src="../png/zumzum.png" style="width: 63px; height: 63px; margin-right: 10px; margin-bottom: 20px;" />
+            <a class="blog-header-logo text-body-emphasis text-decoration-none" href="#">ZUMZUM.COM</a>
+          </div>
 
-    <!-- nav bar kısmı burada başlıyor-->
+          
+          <div id="content" class="col-6 d-flex justify-content-end">
+            <div id="profileIconContainer"></div>
+            <button id="signInButton" style="margin-right: 2rem;" class="btn btn-primary" data-toggle="modal" data-target="#signInModal">
+              <img src="../png/user.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;" />
+              Sign In
+            </button>
+            <button id="signUpButton" class="btn btn-primary" style="margin-right: 5rem;" data-toggle="modal" data-target="#signUpModal">
+              <img src="../png/signup.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;" />
+              Sign Up
+            </button>
+            <button id="signOutButton" class="btn btn-primary" style="display:none;">
+              <img src="../png/logout.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 2px;" />
+              Sign Out
+            </button>
+
+            <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="signInModalLabel">Sign In</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <div class="modal-body">
+                    <form id="loginForm">
+                      <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" class="form-control" id="loginEmail" required />
+                      </div>
+                      <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" class="form-control" id="loginPassword" required />
+                      </div>
+                      <button type="submit" class="btn btn-primary">Sign In</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="signUpModalLabel">Sign Up</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <div class="modal-body">
+                    <form id="signUpForm">
+                      <div class="form-group">
+                        <label for="signUpUsername">Name:</label>
+                        <input type="text" class="form-control" id="signUpUsername" required />
+                      </div>
+                      <div id="NameHelpBlock" class="form-text"></div>
+                      <div class="form-group">
+                        <label for="signUpEmail">Email:</label>
+                        <input type="email" class="form-control" id="signUpEmail" required />
+                      </div>
+                      <div id="EmailHelpBlock" class="form-text"></div>
+                      <div class="form-group">
+                        <label for="signUpPassword">Password:</label>
+                        <input type="password" class="form-control" id="signUpPassword" required />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="confirmSignUpPassword">Confirm Password:</label>
+                        <input type="password" class="form-control" id="confirmSignUpPassword" required />
+                      </div>
+                      <div id="passwordHelpBlock" class="form-text"></div>
+                      <button type="submit" class="btn btn-secondary">Sign Up</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="user-content" style="display:none;">
+              <h2>Welcome, <span id="user-email"></span>!</h2>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- nav bar kısmı burada başlıyor -->
 
       <!-- filtreler -->
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="form-group">
-          <button style="margin-top: 1rem;" class="btn btn-light dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Select Categories
-          </button>
+          <button style="margin-top: 1rem;" class="btn btn-light dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Categories</button>
           <div class="dropdown-menu" aria-labelledby="categoryDropdown">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category1" name="category" value="Gündem">
+              <input class="form-check-input" type="checkbox" id="category1" name="category" value="Gündem" />
               <label class="form-check-label" for="category1">Gündem</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category2" name="category" value="Ev&Yaşam">
+              <input class="form-check-input" type="checkbox" id="category2" name="category" value="Ev&Yaşam" />
               <label class="form-check-label" for="category2">Ev&Yaşam</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category3" name="category" value="Para&Ekonomi">
+              <input class="form-check-input" type="checkbox" id="category3" name="category" value="Para&Ekonomi" />
               <label class="form-check-label" for="category3">Para&Ekonomi</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category4" name="category" value="Moda&Stil">
+              <input class="form-check-input" type="checkbox" id="category4" name="category" value="Moda&Stil" />
               <label class="form-check-label" for="category4">Moda&Stil</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category5" name="category" value="İnternet&Teknoloji">
+              <input class="form-check-input" type="checkbox" id="category5" name="category" value="İnternet&Teknoloji" />
               <label class="form-check-label" for="category5">İnternet&Teknoloji</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="category6" name="category" value="Eğitim&Kariyer">
+              <input class="form-check-input" type="checkbox" id="category6" name="category" value="Eğitim&Kariyer" />
               <label class="form-check-label" for="category6">Eğitim&Kariyer</label>
             </div>
           </div>
         </div>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <form class="d-flex" id="search-form" onsubmit="event.preventDefault(); filterPosts();">
-                <input class="form-control me-2" type="search" id="keyword" placeholder="Post Title..." aria-label="Search">
+              <form class="d-flex" id="search-form">
+                <input class="form-control me-2" type="search" id="keyword" placeholder="Post Title..." aria-label="Search" />
                 <select class="form-select me-2" id="sort-by">
                   <option value="date-asc">Date (Ascending)</option>
                   <option value="date-desc">Date (Descending)</option>
@@ -319,94 +306,80 @@
               </form>
             </li>
           </ul>
-       
         </div>
       </nav>
-      
-      
-    <div class="container mt-5">
-      <ul id="posts" class="list-group">
-        <!-- Posts will be dynamically inserted here -->
-      </ul>
-    </div>
-<!-- filtre bitimi -->
-    <!-- navbar tarafı  burada bitiyor-->
-    
-    <!-- forum starts -->
-    <main class="container">
-      <div class="row g-5">
-        <div class="col-md-8">
-          <div class="new-post-form mb-4">
-            <form id="postForm">
-              <h4>Create a New Post</h4>
-              <input type="text" class="form-control mb-2" id="postTitle" placeholder="Post Title">
- <!-- kategoriler -->
 
-              <div class="form-group">
-          
-                <div class="dropdown">
-                  <button class="btn btn-light dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Select Categories
-                  </button>
-                  <div class="dropdown-menu" aria-labelledby="categoryDropdown">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category1" name="category" value="Gündem">
-                      <label class="form-check-label" for="category1">Gündem</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category2" name="category" value="Ev&Yaşam">
-                      <label class="form-check-label" for="category2">Ev&Yaşam</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category3" name="category" value="Para&Ekonomi">
-                      <label class="form-check-label" for="category3">Para&Ekonomi</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category4" name="category" value="Moda&Stil">
-                      <label class="form-check-label" for="category4">Moda&Stil</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category5" name="category" value="İnternet&Teknoloji">
-                      <label class="form-check-label" for="category5">İnternet&Teknoloji</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="category6" name="category" value="Eğitim&Kariyer">
-                      <label class="form-check-label" for="category6">Eğitim&Kariyer</label>
+      <div class="container mt-5">
+        <ul id="posts" class="list-group">
+          <!-- Posts will be dynamically inserted here -->
+        </ul>
+      </div>
+      <!-- filtre bitimi -->
+      <!-- navbar tarafı burada bitiyor -->
+
+      <!-- forum starts -->
+      <main class="container">
+        <div class="row g-5">
+          <div class="col-md-8">
+            <div class="new-post-form mb-4">
+              <form id="postForm">
+                <h4>Create a New Post</h4>
+                <input type="text" class="form-control mb-2" id="postTitle" placeholder="Post Title" />
+                <!-- kategoriler -->
+
+                <div class="form-group">
+                  <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Categories</button>
+                    <div class="dropdown-menu" aria-labelledby="categoryDropdown">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category1" name="category" value="Gündem" />
+                        <label class="form-check-label" for="category1">Gündem</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category2" name="category" value="Ev&Yaşam" />
+                        <label class="form-check-label" for="category2">Ev&Yaşam</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category3" name="category" value="Para&Ekonomi" />
+                        <label class="form-check-label" for="category3">Para&Ekonomi</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category4" name="category" value="Moda&Stil" />
+                        <label class="form-check-label" for="category4">Moda&Stil</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category5" name="category" value="İnternet&Teknoloji" />
+                        <label class="form-check-label" for="category5">İnternet&Teknoloji</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="category6" name="category" value="Eğitim&Kariyer" />
+                        <label class="form-check-label" for="category6">Eğitim&Kariyer</label>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-             
-              
-              <textarea class="form-control mb-2" id="postContent" rows="3" placeholder="Post Content"></textarea>
-            
-              <button type="submit" class="btn btn-primary">Create Post</button>
-            </form>
+
+                <textarea class="form-control mb-2" id="postContent" rows="3" placeholder="Post Content"></textarea>
+
+                <button type="submit" class="btn btn-primary">Create Post</button>
+              </form>
+            </div>
+            <div class="post-list"></div>
           </div>
-          <div class="post-list">
-          </div>
-          
+          <!-- kategori bitimi -->
+
+          <!-- forum post ends -->
         </div>
-        <!-- kategori bitimi -->
+      </main>
+    </div>
 
-        <!-- forum post ends -->
-    
-      </div>
-    </main>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
-    integrity="sha384-oBqDVmMz4fnFO9gybBogGzFy7IKFpFeTG3S4Ghlrp4CaEwC6M85C81IZP24rBP4h"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="/static/app.js"></script>
-  <script>   
-  </script>
-
-</body>
-
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz4fnFO9gybBogGzFy7IKFpFeTG3S4Ghlrp4CaEwC6M85C81IZP24rBP4h" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="/static/app.js"></script>
+    <script></script>
+  </body>
 </html>

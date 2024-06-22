@@ -4,10 +4,35 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+type Comment struct {
+	CommentID int
+	UserID    int
+	PostID    int
+	Content   string
+	Username  string
+	CreatedAt string
+	UpdatedAt string
+}
+
+type Post struct {
+	PostID         int
+	ThreadID       int
+	Title          string
+	UserToken      string
+	Username       string
+	Content        string
+	Categories     []string
+	CreatedAt      string
+	LikeCounter    int
+	DislikeCounter int
+	Comment        []Comment
+}
 
 var user_db *sql.DB
 
@@ -20,6 +45,7 @@ func createDatabase() {
 	creationQueries := []string{
 		`CREATE TABLE IF NOT EXISTS Users (
 				UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+				Token TEXT,
 				UserLevel INTEGER NOT NULL,
 				Name TEXT,
 				Lastname TEXT,
@@ -33,31 +59,36 @@ func createDatabase() {
 				ThreadID INTEGER,
 				UserID INTEGER,
 				Content TEXT NOT NULL,
+				Likes INTEGER,
+				Dislikes INTEGER,
 				CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (UserID) REFERENCES Users(UserID),
 				FOREIGN KEY (ThreadID) REFERENCES Threads(ThreadID)
 			);`,
-		`CREATE TABLE IF NOT EXISTS Likes(
-				LikeID INTEGER PRIMARY KEY AUTOINCREMENT,
-				UserID INTEGER,
-				PostID INTEGER,
+		`CREATE TABLE IF NOT EXISTS LikesDislikes(
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
+				UserID INTEGER NOT NULL,
+				PostID INTEGER NOT NULL,
+				IsLike BOOLEAN NOT NULL,
+				CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (UserID) REFERENCES Users(UserID),
-				FOREIGN KEY (PostID) REFERENCES Posts(PostID)
-			);`,
+				FOREIGN KEY (PostID) REFERENCES Posts(PostID),
+				UNIQUE(UserID, PostID)
+				);`,
 		`CREATE TABLE IF NOT EXISTS Threads(
 				ThreadID INTEGER PRIMARY KEY AUTOINCREMENT,
 				Title TEXT NOT NULL,
 				UserID INTEGER,
-				CategoryID INTEGER,
+				CategoryIDs TEXT NOT NULL,
 				CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (UserID) REFERENCES Users(UserID),
-				FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+				FOREIGN KEY (CategoryIDs) REFERENCES Categories(CategoryIDs)
 			);`,
 		`CREATE TABLE IF NOT EXISTS Categories(
-				CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
-				CategoryName TEXT NOT NULL UNIQUE,
+				CategoryIDs TEXT PRIMARY KEY,
+				CategoryNames TEXT NOT NULL UNIQUE,
 				CategoryDescription TEXT 
 			);`,
 		`CREATE TABLE IF NOT EXISTS Comments (
@@ -79,7 +110,6 @@ func createDatabase() {
 	}
 
 }
-
 func Query_email(email string) (string, error) {
 	var password string
 	row := user_db.QueryRow("SELECT Email, Password FROM Users WHERE Email = ?", email)
@@ -119,6 +149,43 @@ func Query(id int) (string, string, error) {
 	return email, password, nil
 }
 
+func QueryToken(username string) (string, error) {
+	var token string
+	row := user_db.QueryRow("SELECT Token FROM Users WHERE Nickname = ?", username)
+	err := row.Scan(&token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no user with username %s", username)
+		}
+		return "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return token, nil
+}
+func QueryTokenID(id int) (string, string, error) {
+	var token, username string
+	row := user_db.QueryRow("SELECT Token, Nickname FROM Users WHERE UserID = ?", id)
+	err := row.Scan(&token, &username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", fmt.Errorf("no user with id %d", id)
+		}
+		return "", "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return token, username, nil
+}
+
+func Query_ID(token string) (int, error) {
+	var id int
+	row := user_db.QueryRow("SELECT UserID FROM Users WHERE Token = ?", token)
+	err := row.Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no user with token %s", token)
+		}
+		return 0, fmt.Errorf("error scanning row: %v", err)
+	}
+	return id, nil
+}
 func SetMod(id int) error {
 	statement, err := user_db.Prepare("UPDATE Users SET UserLevel = 1 WHERE UserID = ?")
 	if err != nil {
@@ -146,59 +213,53 @@ func SetAdmin(id int) error {
 	}
 	return nil
 }
-func insertUser(username, email, password string) error {
+
+func insertUser(username, email, password, token string) error {
 	hashedPassword := hashPassword(password)
-
-	// Check if username or email already exists.
-	var exists bool
-	err := user_db.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE Nickname = ? OR Email = ?)", username, email).Scan(&exists)
-	if err != nil {
-		log.Println("Error checking for existing user:", err)
-		return err
-	}
-
-	if exists {
-		fmt.Println("Error: Username or email already exists.")
-		return fmt.Errorf("username or email already exists")
-	}
-
-	statement, err := user_db.Prepare("INSERT INTO Users (UserLevel, Nickname, Email, Password) VALUES (?, ?, ?, ?)")
+	statement, err := user_db.Prepare("INSERT OR IGNORE INTO Users (UserLevel, Nickname, Token, Email, Password) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(0, username, email, hashedPassword) // user lever for zoro
+	_, err = statement.Exec(0, username, token, email, hashedPassword)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error executing statement:", err)
+		return err
 	}
 
-	fmt.Println("User added successfully.")
+	fmt.Println("Data inserted successfully.")
 	return nil
 }
-
-func getUserID(email string) (int, error) {
-	var id int
-	row := user_db.QueryRow("SELECT UserID FROM Users WHERE Email = ?", email)
-	err := row.Scan(&id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("no user with email %s", email)
-		}
-		return 0, fmt.Errorf("error scanning row: %v", err)
+func category2ID(categories []string) ([]string, error) {
+	var ids []string
+	dict := map[string]string{
+		`Gündem`:             "1",
+		`Ev&Yaşam`:           "2",
+		`Para&Ekonomi`:       "3",
+		`Moda&Stil`:          "4",
+		`İnternet&Teknoloji`: "5",
+		`Eğitim&Kariyer`:     "6",
 	}
-	return id, nil
+	for _, category := range categories {
+		id, ok := dict[category]
+		if !ok {
+			return nil, fmt.Errorf("no category with name %s", category)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 func insertPost(threadID, userID int, content string) error {
-	statement, err := user_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content) VALUES (?, ?, ?)")
+	statement, err := user_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(threadID, userID, content)
+	_, err = statement.Exec(threadID, userID, content, 0, 0)
 	if err != nil {
 		log.Println("Error executing statement,", err)
 		return err
@@ -208,15 +269,24 @@ func insertPost(threadID, userID int, content string) error {
 	return nil
 }
 
-func insertThread(userID, categoryID int, title string) (int, error) {
-	statement, err := user_db.Prepare("INSERT INTO Threads (UserID, CategoryID, Title) VALUES (?, ?, ?)")
+func insertThread(userID int, title string, categories []string) (int, error) {
+	ids, err := category2ID(categories)
+	if err != nil {
+		return 0, err
+	}
+	categoryIDs := ""
+	for _, id := range ids {
+		categoryIDs += id + ","
+	}
+	categoryIDs = categoryIDs[:len(categoryIDs)-1]
+	statement, err := user_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return 0, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(userID, categoryID, title)
+	_, err = statement.Exec(userID, title, categoryIDs)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return 0, err
@@ -258,19 +328,77 @@ func WriteAllData() {
 	}
 }
 
-type Post struct {
-	PostID    int
-	ThreadID  int
-	Title     string
-	UserID    int
-	Username  string
-	Content   string
-	CreatedAt string
+func getCommentsByPostID(postID int) ([]Comment, error) {
+	comments := []Comment{}
+
+	rows, err := user_db.Query("SELECT CommentID, UserID, PostID, Content, CreatedAt, UpdatedAt FROM Comments WHERE PostID=?", postID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var comment Comment
+		var createdAt, updatedAt time.Time
+		err := rows.Scan(&comment.CommentID, &comment.UserID, &comment.PostID, &comment.Content, &createdAt, &updatedAt)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+
+		comment.CreatedAt = createdAt.Format("2006-01-02 15:04:05")
+		comment.UpdatedAt = updatedAt.Format("2006-01-02 15:04:05")
+		comments = append(comments, comment)
+
+	}
+
+	for i, comment := range comments {
+		rows, err = user_db.Query("SELECT Nickname FROM Users WHERE UserID=?", comment.UserID)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		defer rows.Close()
+
+		rows.Next()
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		comments[i].Username = username
+
+	}
+
+	return comments, nil
+
+}
+
+func getCategoriesByID(id string) ([]string, error) {
+	var categories []string
+	idList := strings.Split(id, ",")
+	dict := map[string]string{
+		"1": "Gündem",
+		"2": "Ev&Yaşam",
+		"3": "Para&Ekonomi",
+		"4": "Moda&Stil",
+		"5": "İnternet&Teknoloji",
+		"6": "Eğitim&Kariyer",
+	}
+	for _, id := range idList {
+		category, ok := dict[id]
+		if !ok {
+			return nil, fmt.Errorf("no category with id %s", id)
+		}
+		categories = append(categories, category)
+	}
+	return categories, nil
 }
 
 func getAllPosts() ([]Post, error) {
 	posts := []Post{}
-	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts")
+	rows, err := user_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts")
 	if err != nil {
 		log.Println("Error querying data:", err)
 		return nil, err
@@ -281,37 +409,369 @@ func getAllPosts() ([]Post, error) {
 		var postID, threadID, userID int
 		var content string
 		var createdAt time.Time
-		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt)
+		var likes, dislikes int
+		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt, &likes, &dislikes)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
+		userToken, username, err := QueryTokenID(userID)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+
 		post := Post{
-			PostID:    postID,
-			ThreadID:  threadID,
-			UserID:    userID,
-			Content:   content,
-			CreatedAt: createdAt.Format("2006-01-02 15:04:05"), // Format the time as desired
+			PostID:         postID,
+			ThreadID:       threadID,
+			Content:        content,
+			UserToken:      userToken,
+			Username:       username,
+			LikeCounter:    likes,
+			DislikeCounter: dislikes,
+			CreatedAt:      createdAt.Format("2006-01-02 15:04:05"),
 		}
 		posts = append(posts, post)
 	}
 
 	for i, post := range posts {
-		rows, err = user_db.Query("SELECT Nickname FROM Users WHERE UserID = ?", post.UserID)
+		rows, err = user_db.Query("SELECT Title, CategoryIDs FROM Threads WHERE ThreadID = ?", post.ThreadID)
 		if err != nil {
 			log.Println("Error querying data:", err)
 		}
 		defer rows.Close()
 		rows.Next()
-		var username string
-		err := rows.Scan(&username)
+		var title string
+		var categoryIDs string
+		err := rows.Scan(&title, &categoryIDs)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		posts[i].Username = username
+		categories, err := getCategoriesByID(categoryIDs)
+		if err != nil {
+			log.Println("Error querying data:", err)
+		}
+		posts[i].Categories = categories
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		posts[i].Title = title
 	}
 
+	for i, post := range posts {
+		comments, err := getCommentsByPostID(post.PostID)
+		if err != nil {
+			log.Println("Error getting comments:", err)
+			return nil, err
+		}
+		if comments != nil {
+			posts[i].Comment = comments
+		}
+	}
+	return posts, nil
+}
+
+func checkToken(token string) bool {
+	var user string
+	row := user_db.QueryRow("SELECT Token FROM Users WHERE Token = ?", token)
+	err := row.Scan(&user)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+	}
+	if user == "" {
+		return false
+	}
+	return true
+}
+func getUserName(token string) (string, error) {
+	var username string
+	row := user_db.QueryRow("SELECT Nickname FROM Users WHERE Token = ?", token)
+	err := row.Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no user with token %s", token)
+		}
+		return "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return username, nil
+}
+func deletePostFromDB(PostID int) error {
+	var threadID int
+	row := user_db.QueryRow("SELECT ThreadID FROM Posts WHERE PostID = ?", PostID)
+	err := row.Scan(&threadID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return err
+	}
+
+	statement, err := user_db.Prepare("DELETE FROM Posts WHERE PostID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(PostID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+
+	statement, err = user_db.Prepare("DELETE FROM Comments WHERE PostID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(PostID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+
+	statement, err = user_db.Prepare("DELETE FROM Threads WHERE ThreadID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(threadID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+	return nil
+}
+func insertComment(userID, postID int, content string) error {
+	statement, err := user_db.Prepare("INSERT INTO Comments (UserID, PostID, Content) VALUES (?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(userID, postID, content)
+	if err != nil {
+		log.Println("Error executing statement,", err)
+		return err
+	}
+
+	fmt.Println("Data inserted successfully.")
+	return nil
+
+}
+
+func deleteCommentFromDB(CommentID int) error {
+	statement, err := user_db.Prepare("DELETE FROM Comments WHERE CommentID = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(CommentID)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+	return nil
+}
+
+type LikeDislikeActions struct {
+	UserID int
+	PostID int
+	IsLike bool
+}
+
+func HandleLikeDislike(action LikeDislikeActions) error {
+
+	var currentID int
+	var currentIsLike bool
+
+	err := user_db.QueryRow(`SELECT ID, IsLike FROM LikesDislikes WHERE UserID = ? AND PostID = ?`, action.UserID, action.PostID).Scan(&currentID, &currentIsLike)
+
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("query error: %v", err)
+	}
+
+	if err == sql.ErrNoRows {
+		_, err = user_db.Exec(`INSERT INTO LikesDislikes (UserID, PostID, IsLike) VALUES (?,?,?) `, action.UserID, action.PostID, action.IsLike)
+		if err != nil {
+			return fmt.Errorf("insert error: %v", err)
+		}
+
+		if action.IsLike {
+			_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes + 1 WHERE PostID = ?`, action.PostID)
+		} else {
+			_, err = user_db.Exec(`UPDATE Posts SET Dislikes = Dislikes + 1 WHERE PostID = ?`, action.PostID)
+		}
+		if err != nil {
+			return fmt.Errorf("update count error: %v", err)
+		}
+	} else {
+		if currentIsLike == action.IsLike {
+			_, err = user_db.Exec(`DELETE FROM LikesDislikes WHERE ID = ?`, currentID)
+			if err != nil {
+				return fmt.Errorf("delete error: %v", err)
+			}
+
+			if action.IsLike {
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes - 1 WHERE PostID = ?`, action.PostID)
+			} else {
+				_, err = user_db.Exec(`UPDATE Posts SET Dislikes = Dislikes - 1 WHERE PostID = ?`, action.PostID)
+			}
+
+			if err != nil {
+				return fmt.Errorf("update count error: %v", err)
+			}
+		} else {
+			_, err = user_db.Exec(`UPDATE LikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
+			if err != nil {
+				return fmt.Errorf("update error: %v", err)
+			}
+
+			if action.IsLike {
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes + 1, Dislikes = Dislikes - 1 WHERE PostID = ?`, action.PostID)
+			} else {
+				_, err = user_db.Exec(`UPDATE Posts SET Likes = Likes - 1, Dislikes = Dislikes + 1 WHERE PostID = ?`, action.PostID)
+			}
+
+			if err != nil {
+				return fmt.Errorf("update count error: %v", err)
+			}
+		}
+	}
+	return nil
+}
+func getFilteredPosts(categories []string, title string) ([]Post, error) {
+	var posts []Post
+
+	if len(categories) == 0 && title == "" {
+		return getAllPosts()
+	}
+
+	categoryPosts := make(map[int]Post)
+	if len(categories) > 0 {
+		ids, err := category2ID(categories)
+		if err != nil {
+			return nil, err
+		}
+		categoryIDs := ""
+		for _, id := range ids {
+			categoryIDs += id + ","
+		}
+		categoryIDs = categoryIDs[:len(categoryIDs)-1]
+
+		rows, err := user_db.Query("SELECT ThreadID FROM Threads WHERE CategoryIDs = ?", categoryIDs)
+		if err != nil {
+			log.Println("Error querying data:", err)
+			return nil, err
+		}
+		defer rows.Close()
+		var threadID int
+		for rows.Next() {
+			err := rows.Scan(&threadID)
+			if err != nil {
+				log.Println("Error scanning row:", err)
+				return nil, err
+			}
+			tempPosts, err := getPostByThreadID(threadID)
+			if err != nil {
+				log.Println("Error getting posts:", err)
+				return nil, err
+			}
+			for _, post := range tempPosts {
+				categoryPosts[post.PostID] = post
+			}
+		}
+	}
+	titlePosts := make(map[int]Post)
+	if title != "" {
+		rows, err := user_db.Query("SELECT ThreadID FROM Threads WHERE Title = ?", title)
+		if err != nil {
+			log.Println("Error querying data:", err)
+			return nil, err
+		}
+		defer rows.Close()
+		var threadID int
+		for rows.Next() {
+			err := rows.Scan(&threadID)
+			if err != nil {
+				log.Println("Error scanning row:", err)
+				return nil, err
+			}
+			tempPosts, err := getPostByThreadID(threadID)
+			if err != nil {
+				log.Println("Error getting posts:", err)
+				return nil, err
+			}
+			for _, post := range tempPosts {
+				titlePosts[post.PostID] = post
+			}
+		}
+	}
+	if len(categories) > 0 && title != "" {
+		for id, post := range categoryPosts {
+			if _, exists := titlePosts[id]; exists {
+				posts = append(posts, post)
+			}
+		}
+	} else if len(categories) > 0 {
+		for _, post := range categoryPosts {
+			posts = append(posts, post)
+		}
+	} else if title != "" {
+		for _, post := range titlePosts {
+			posts = append(posts, post)
+		}
+	}
+
+	return posts, nil
+}
+
+func getPostByThreadID(threadID int) ([]Post, error) {
+	posts := []Post{}
+	rows, err := user_db.Query("SELECT PostID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
+	if err != nil {
+		log.Println("Error querying data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var postID, userID int
+		var content string
+		var createdAt time.Time
+		var likes, dislikes int
+		err := rows.Scan(&postID, &userID, &content, &createdAt, &likes, &dislikes)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		userToken, username, err := QueryTokenID(userID)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return nil, err
+		}
+		post := Post{
+			PostID:         postID,
+			ThreadID:       threadID,
+			Content:        content,
+			UserToken:      userToken,
+			Username:       username,
+			LikeCounter:    likes,
+			DislikeCounter: dislikes,
+			CreatedAt:      createdAt.Format("2006-01-02 15:04:05"),
+		}
+		posts = append(posts, post)
+	}
+	fmt.Println("Posts:", posts)
 	for i, post := range posts {
 		rows, err = user_db.Query("SELECT Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
 		if err != nil {
@@ -327,5 +787,60 @@ func getAllPosts() ([]Post, error) {
 		}
 		posts[i].Title = title
 	}
+
+	for i, post := range posts {
+		comments, err := getCommentsByPostID(post.PostID)
+		if err != nil {
+			log.Println("Error getting comments:", err)
+			return nil, err
+		}
+		if comments != nil {
+			posts[i].Comment = comments
+		}
+	}
 	return posts, nil
+}
+
+func sortByDateAsc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].CreatedAt > posts[j].CreatedAt {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByDateDesc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].CreatedAt < posts[j].CreatedAt {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByLikeAsc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].LikeCounter > posts[j].LikeCounter {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
+}
+
+func sortByLikeDesc(posts []Post) []Post {
+	for i := 0; i < len(posts); i++ {
+		for j := i + 1; j < len(posts); j++ {
+			if posts[i].LikeCounter < posts[j].LikeCounter {
+				posts[i], posts[j] = posts[j], posts[i]
+			}
+		}
+	}
+	return posts
 }
