@@ -24,8 +24,7 @@ function checkToken() {
         console.log(data.username);
         const initial = data.username.charAt(0).toUpperCase();
         const profileIconHTML = `
-          <a href="/profile" class="profile-icon">${initial}</a>
-        `;
+          <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
         document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
         $('#profileIconContainer').show();
         $('#signInButton').hide();
@@ -38,22 +37,6 @@ function checkToken() {
         $('#signInButton').show();
         $('#signUpButton').show();
       }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-if (window.location.pathname === '/profile') {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  fetch('/get-user-info', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }, body: JSON.stringify({ token: token })
-  })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
     })
     .catch(error => console.error('Error:', error));
 }
@@ -119,6 +102,7 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
     .then(data => {
       if (data.success) {
         alert(data.message);
+        location.reload();
       } else {
         alert("Error signing up user: " + data.message);
       }
@@ -138,6 +122,7 @@ document.getElementById('signOutButton').addEventListener('click', function () {
       if (data.success) {
         alert(data.message);
         location.reload();
+
       } else {
         alert("Error signing out: " + data.message);
       }
@@ -191,21 +176,32 @@ function ld_submit(PostID, isLike) {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        getAllPosts();
       } else {
         alert("Error liking/disliking post: " + data.message);
       }
     })
     .catch(error => console.error('Error:', error));
-  location.reload();
+  //location.reload();
 }
 
-function ld_post(PostToken, PostID, likes, dislikes) {
-  var token = getCookie('token');
-
-  if (token == PostToken) {
-    return '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_submit(\'' + PostID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">' + likes + '</span></button><button class="like-dislike-btn" onclick="ld_submit(\'' + PostID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">' + dislikes + '</span></button>';
-  }
-  return '';
+function ld_comment_submit(CommentID,isLike){
+  fetch('/ld_comment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ CommentID: CommentID, isLike: isLike })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        getAllPosts();
+      } else {
+        alert("Error liking/disliking comment: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 
@@ -292,24 +288,42 @@ function getAllPosts() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        var postList = document.querySelector('.post-list');
+        postList.innerHTML = '';
         var posts = data.posts;
-        console.log(posts);
         posts.forEach(post => {
-          const categories = post.Categories.map(cat => `<span class="badge bg-secondary">${cat}</span>`).join(' ');
           var newPost = document.createElement('article');
           newPost.classList.add('post');
-          newPost.innerHTML = '<h2 class="blog-post-title">'
-            + post.Title +
-            '</h2><p class="blog-post-meta">'
-            + post.CreatedAt +
-            '<a href="/profile?token=' + post.UserToken + '">'
-            + " " + post.Username +
-            '</a></p><p>' +
-            '<div class="post-categories">' + categories + '</div>'
-            + post.Content +
-            '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="likePost(this)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="dislikePost(this)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button><button class="reply-btn" onclick="writeComment(this)">Comment</button>'
-            + getDeletePostButtonHtml(post.UserToken, post.PostID) +
-            '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+          newPost.innerHTML = `<h2 class="blog-post-title">
+            ${post.Title}
+          </h2>
+          <p class="blog-post-meta">
+            ${post.CreatedAt}
+            <a href="/profile/${post.Username}">
+              ${post.Username}
+            </a>
+          </p>
+          <p>
+            <div class="post-categories">${post.Categories}</div>
+            ${post.Content}
+          </p>
+          <hr>
+          <div class="buttons">
+            <button class="like-dislike-btn" onclick="ld_submit('${post.PostID}', true)">
+              <img src="../png/like.png" alt="Like Icon">Like
+              <span class="like-count">${post.LikeCounter}</span>
+            </button>
+            <button class="like-dislike-btn" onclick="ld_submit('${post.PostID}', false)">
+              <img src="../png/dislike.png" alt="Dislike Icon">Dislike
+              <span class="dislike-count">${post.DislikeCounter}</span>
+            </button>
+            <button class="reply-btn" onclick="writeComment(this)">Comment</button>
+            ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
+          </div>
+          <div class="reply-form" style="display:none;">
+            <input type="text" class="form-control" placeholder="Write a comment...">
+            <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
+          </div>`;
           newPost.dataset.postId = post.PostID;
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
@@ -324,7 +338,7 @@ function getAllPosts() {
               + comment.Username +
               '</a></p><p>'
               + comment.Content +
-              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">0</span></button><button class="like-dislike-btn" onclick="ld_submit(\'' + post.PostID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">0</span></button>'
+              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">' + comment.LikeCounter + '</span></button><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">' + comment.DislikeCounter + '</span></button>'
               + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
               '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
@@ -340,16 +354,14 @@ function getAllPosts() {
 
 document.getElementById('postForm').addEventListener('submit', function (event) {
   event.preventDefault();
-
   var title = document.getElementById('postTitle').value;
   var content = document.getElementById('postContent').value;
   var selectedCategories = [];
   var checkboxes = document.querySelectorAll('input[name="category"]:checked');
-
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
-  });
-
+  }
+  );
   fetch('/create-post', {
     method: 'POST',
     headers: {
@@ -360,29 +372,7 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        // 
-        const post = data.post;
-        var postList = document.querySelector('.post-list');
-        var newPost = document.createElement('article');
-        newPost.classList.add('post');
-        newPost.dataset.postId = post.PostID;
-        const categories = post.Categories.map(cat => `<span class="badge bg-secondary">${cat}</span>`).join(' ');
-        newPost.innerHTML = `
-          <h2 class="blog-post-title">${post.Title}</h2>
-          <p class="blog-post-meta">${post.CreatedAt} <a href="/profile?token=${post.UserToken}">${post.Username}</a></p>
-          <div class="post-categories">${categories}</div>
-          <p>${post.Content}</p>
-          ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
-          ${ld_post(post.UserToken, post.PostID, post.LikeCounter, post.DislikeCounter)}
-          <div class="reply-form" style="display:none;">
-            <input type="text" class="form-control" placeholder="Write a comment...">
-            <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
-          </div>
-        `;
-        postList.prepend(newPost);
-        document.getElementById('postTitle').value = '';
-        document.getElementById('postContent').value = '';
-        checkboxes.forEach(checkbox => checkbox.checked = false);
+        location.reload();
       } else {
         alert("Error creating post: " + data.message);
       }
