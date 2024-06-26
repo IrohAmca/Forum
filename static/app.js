@@ -210,6 +210,10 @@ function ld_post(PostToken, PostID, likes, dislikes) {
 
 
 window.writeComment = function (button) {
+  if (getCookie('token') === undefined) {
+    alert('You must be logged in to comment');
+    return;
+  }
   var replyForm = button.closest('.post').querySelector('.reply-form');
   replyForm.style.display = 'block';
 };
