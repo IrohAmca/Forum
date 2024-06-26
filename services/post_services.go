@@ -1,14 +1,15 @@
-package main
+package services
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
-
+	"forum/models"
 	"github.com/gin-gonic/gin"
+	"forum/db_manager"
 )
 
-func createPost(c *gin.Context) {
+func CreatePost(c *gin.Context) {
 	var post struct {
 		Title      string   `json:"title" binding:"required"`
 		Content    string   `json:"content" binding:"required"`
@@ -23,39 +24,39 @@ func createPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	userID, err := Query_ID(token)
+	userID, err := db_manager.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	threadID, err := insertThread(userID, post.Title, post.Categories)
+	threadID, err := db_manager.InsertThread(userID, post.Title, post.Categories)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	insertPost(threadID, userID, post.Content)
+	db_manager.InsertPost(threadID, userID, post.Content)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
 }
 
-func shortPost(short_type string, posts []Post) []Post {
+func ShortPost(short_type string, posts []models.Post) []models.Post {
 	if short_type != "" {
 		if short_type == "date-asc" {
 			fmt.Println("date-asc")
-			posts = sortByDateAsc(posts)
+			posts = db_manager.SortByDateAsc(posts)
 		} else if short_type == "date-desc" {
 			fmt.Println("date-desc")
-			posts = sortByDateDesc(posts)
+			posts = db_manager.SortByDateDesc(posts)
 		} else if short_type == "likes-asc" {
 			fmt.Println("likes-asc")
-			posts = sortByLikeAsc(posts)
+			posts = db_manager.SortByLikeAsc(posts)
 		} else if short_type == "likes-desc" {
 			fmt.Println("likes-desc")
-			posts = sortByLikeDesc(posts)
+			posts = db_manager.SortByLikeDesc(posts)
 		}
 	}
 	return posts
 }
-func getPosts(c *gin.Context) {
+func GetPosts(c *gin.Context) {
 	var categories struct {
 		Categories []string `json:"categories"`
 		Title      string   `json:"title"`
@@ -65,16 +66,16 @@ func getPosts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	post ,err :=getFilteredPosts(categories.Categories, categories.Title)
+	post ,err :=db_manager.GetFilteredPosts(categories.Categories, categories.Title)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	post = shortPost(categories.Short_type, post)
+	post = ShortPost(categories.Short_type, post)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Posts retrieved successfully", "posts": post})
 }
 
-func deletePost(c *gin.Context) {
+func DeletePost(c *gin.Context) {
 	var post struct {
 		PostID string `json:"PostID" binding:"required"`
 	}
@@ -87,7 +88,7 @@ func deletePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	err = deletePostFromDB(postID)
+	err = db_manager.DeletePostFromDB(postID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
@@ -95,7 +96,7 @@ func deletePost(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post deleted successfully"})
 }
-func createComment(c *gin.Context) {
+func CreateComment(c *gin.Context) {
 	var comment struct {
 		PostID  string `json:"postId" binding:"required"`
 		Content string `json:"comment" binding:"required"`
@@ -114,12 +115,12 @@ func createComment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	userID, err := Query_ID(token)
+	userID, err := db_manager.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	err = insertComment(userID, postID, comment.Content)
+	err = db_manager.InsertComment(userID, postID, comment.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -127,7 +128,7 @@ func createComment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment created successfully"})
 }
 
-func deleteComment(c *gin.Context) {
+func DeleteComment(c *gin.Context) {
 	var comment struct {
 		CommentID string `json:"CommentID" binding:"required"`
 	}
@@ -140,7 +141,7 @@ func deleteComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid CommentID"})
 		return
 	}
-	err = deleteCommentFromDB(commentID)
+	err = db_manager.DeleteCommentFromDB(commentID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
@@ -149,7 +150,7 @@ func deleteComment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Comment deleted successfully"})
 }
 
-func likeDislikePost(c *gin.Context) {
+func LikeDislikePost(c *gin.Context) {
 	var like struct {
 		PostID string `json:"PostID" binding:"required"`
 		IsLike bool   `json:"isLike"`
@@ -168,17 +169,55 @@ func likeDislikePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	userID, err := Query_ID(token)
+	userID, err := db_manager.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	action := LikeDislikeActions{
+	action := db_manager.LikeDislikePostActions{
 		UserID: userID,
 		PostID: postID,
 		IsLike: like.IsLike,
 	}
-	err = HandleLikeDislike(action)
+	err = db_manager.HandleLikeDislike(action)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Like/Dislike action successful"})
+}
+
+func LikeDislikeComment(c *gin.Context) {
+	var like struct {
+		CommentID string `json:"CommentID" binding:"required"`
+		IsLike bool   `json:"isLike"`
+	}
+	if err := c.ShouldBindJSON(&like); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
+		return
+	}
+	commentID, err := strconv.Atoi(like.CommentID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
+		return
+	}
+	token, err := c.Cookie("token")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	userID, err := db_manager.Query_ID(token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	action := db_manager.LikeDislikeCommentActions{
+		UserID: userID,
+		CommentID: commentID,
+		IsLike: like.IsLike,
+	}
+	err = db_manager.HandleLikeDislikeComment(action)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
