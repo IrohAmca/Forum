@@ -206,6 +206,10 @@ function ld_comment_submit(CommentID,isLike){
 
 
 window.writeComment = function (button) {
+  if (getCookie('token') === undefined) {
+    alert('You must be logged in to comment');
+    return;
+  }
   var replyForm = button.closest('.post').querySelector('.reply-form');
   replyForm.style.display = 'block';
 };
