@@ -231,14 +231,14 @@ func HandleLikeDislike(action LikeDislikePostActions) error {
 	var currentID int
 	var currentIsLike bool
 
-	err := User_db.QueryRow(`SELECT ID, IsLike FROM LikesDislikes WHERE UserID = ? AND PostID = ?`, action.UserID, action.PostID).Scan(&currentID, &currentIsLike)
+	err := User_db.QueryRow(`SELECT ID, IsLike FROM PostLikesDislikes WHERE UserID = ? AND PostID = ?`, action.UserID, action.PostID).Scan(&currentID, &currentIsLike)
 
 	if err != nil && err != sql.ErrNoRows {
 		return fmt.Errorf("query error: %v", err)
 	}
 
 	if err == sql.ErrNoRows {
-		_, err = User_db.Exec(`INSERT INTO LikesDislikes (UserID, PostID, IsLike) VALUES (?,?,?) `, action.UserID, action.PostID, action.IsLike)
+		_, err = User_db.Exec(`INSERT INTO PostLikesDislikes (UserID, PostID, IsLike) VALUES (?,?,?) `, action.UserID, action.PostID, action.IsLike)
 		if err != nil {
 			return fmt.Errorf("insert error: %v", err)
 		}
@@ -253,7 +253,7 @@ func HandleLikeDislike(action LikeDislikePostActions) error {
 		}
 	} else {
 		if currentIsLike == action.IsLike {
-			_, err = User_db.Exec(`DELETE FROM LikesDislikes WHERE ID = ?`, currentID)
+			_, err = User_db.Exec(`DELETE FROM PostLikesDislikes WHERE ID = ?`, currentID)
 			if err != nil {
 				return fmt.Errorf("delete error: %v", err)
 			}
@@ -268,7 +268,7 @@ func HandleLikeDislike(action LikeDislikePostActions) error {
 				return fmt.Errorf("update count error: %v", err)
 			}
 		} else {
-			_, err = User_db.Exec(`UPDATE LikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
+			_, err = User_db.Exec(`UPDATE PostLikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
 			if err != nil {
 				return fmt.Errorf("update error: %v", err)
 			}
@@ -297,14 +297,14 @@ func HandleLikeDislikeComment(action LikeDislikeCommentActions) error {
 	var currentID int
 	var currentIsLike bool
 
-	err := User_db.QueryRow(`SELECT ID, IsLike FROM LikesDislikes WHERE UserID = ? AND CommentID = ?`, action.UserID, action.CommentID).Scan(&currentID, &currentIsLike)
+	err := User_db.QueryRow(`SELECT ID, IsLike FROM CommentLikesDislikes WHERE UserID = ? AND CommentID = ?`, action.UserID, action.CommentID).Scan(&currentID, &currentIsLike)
 
 	if err != nil && err != sql.ErrNoRows {
 		return fmt.Errorf("query error: %v", err)
 	}
 
 	if err == sql.ErrNoRows {
-		_, err = User_db.Exec(`INSERT INTO LikesDislikes (UserID, CommentID, IsLike) VALUES (?,?,?) `, action.UserID, action.CommentID, action.IsLike)
+		_, err = User_db.Exec(`INSERT INTO CommentLikesDislikes (UserID, CommentID, IsLike) VALUES (?,?,?) `, action.UserID, action.CommentID, action.IsLike)
 		if err != nil {
 			return fmt.Errorf("insert error: %v", err)
 		}
@@ -319,7 +319,7 @@ func HandleLikeDislikeComment(action LikeDislikeCommentActions) error {
 		}
 	} else {
 		if currentIsLike == action.IsLike {
-			_, err = User_db.Exec(`DELETE FROM LikesDislikes WHERE ID = ?`, currentID)
+			_, err = User_db.Exec(`DELETE FROM CommentLikesDislikes WHERE ID = ?`, currentID)
 			if err != nil {
 				return fmt.Errorf("delete error: %v", err)
 			}
@@ -334,7 +334,7 @@ func HandleLikeDislikeComment(action LikeDislikeCommentActions) error {
 				return fmt.Errorf("update count error: %v", err)
 			}
 		} else {
-			_, err = User_db.Exec(`UPDATE LikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
+			_, err = User_db.Exec(`UPDATE CommentLikesDislikes SET IsLike = ? WHERE ID = ?`, action.IsLike, currentID)
 			if err != nil {
 				return fmt.Errorf("update error: %v", err)
 			}
@@ -477,7 +477,6 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 		}
 		posts = append(posts, post)
 	}
-	fmt.Println("Posts:", posts)
 	for i, post := range posts {
 		rows, err = User_db.Query("SELECT Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
 		if err != nil {
@@ -559,30 +558,6 @@ type postById struct {
 	CreatedAt string
 }
 
-func PostDataByUserID(userID int) ([]postById, error) {
-	rows, err := User_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt FROM Posts WHERE UserID = ?", userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var posts []postById
-	for rows.Next() {
-		var post postById
-		err := rows.Scan(&post.PostID, &post.ThreadID, &post.UserID, &post.Content, &post.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		posts = append(posts, post)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return posts, nil
-}
-
 func InsertComment(userID, postID int, content string) error {
 	statement, err := User_db.Prepare("INSERT INTO Comments (UserID, PostID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
@@ -600,4 +575,32 @@ func InsertComment(userID, postID int, content string) error {
 	fmt.Println("Data inserted successfully.")
 	return nil
 
+}
+func GetPostByID(postID int) ([]models.Post, error) {
+	var posts []models.Post
+	row := User_db.QueryRow("SELECT ThreadID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE PostID = ?", postID)
+	var post models.Post
+	var threadID, userID, likes, dislikes int
+	var content, createdAt string
+	err := row.Scan(&threadID, &userID, &content, &createdAt, &likes, &dislikes)
+	if err != nil {
+		return []models.Post{}, err
+	}
+	userToken, username, err := QueryTokenID(userID)
+	if err != nil {
+		return []models.Post{}, err
+	}
+	post = models.Post{
+		PostID:         postID,
+		ThreadID:       threadID,
+		Content:        content,
+		UserToken:      userToken,
+		Username:       username,
+		LikeCounter:    likes,
+		DislikeCounter: dislikes,
+		CreatedAt:      createdAt,
+	}
+	posts = append(posts, post)
+
+	return posts, nil
 }

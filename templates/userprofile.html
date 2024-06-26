@@ -191,6 +191,31 @@
       </div>
       {{end}}
     </div>
+
+    <div class="user-posts">
+      <h2>Liked Disliked Posts</h2>
+      {{range .LD_Posts}}
+      <div class="post">
+        <h4>{{.Title}}</h4>
+        <p>{{.Content}}</p>
+        <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
+        <p><strong>Created At:</strong> {{.CreatedAt}}</p>
+      </div>
+      {{end}}
+    </div>
+    <div class="user-posts">
+      <h2>Liked Disliked Comment</h2>
+      {{range .LD_Comment}}
+      <div class="post">
+        <h4>{{.Title}}</h4>
+        <p>{{.Content}}</p>
+        <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
+        <p><strong>Created At:</strong> {{.CreatedAt}} by <a href="#">{{.Username}}</a></p>
+        <p>{{.Content}}</p>
+        <hr>
+      </div>
+      {{end}}
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

@@ -5,6 +5,7 @@ type Post struct {
 	ThreadID       int
 	Title          string
 	UserToken      string
+	UserID         int
 	Username       string
 	Content        string
 	Categories     []string

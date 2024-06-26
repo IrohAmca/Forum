@@ -117,7 +117,7 @@ func ProfilePage(c *gin.Context) {
 		return
 	}
 
-	user, posts, err := userInfo(userID)
+	user, posts, ld_post, ld_comment, err := userInfo(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -128,21 +128,19 @@ func ProfilePage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-
-	data := struct {
-		User  models.User
-		Posts []models.Post
-	}{
-		User:  *user,
-		Posts: *posts,
+	data := models.UserData{
+		User:       user,
+		Posts:      posts,
+		LD_Posts:   ld_post,
+		LD_Comment: ld_comment,
 	}
 	tpl.Execute(w, &data)
 }
 
-func userInfo(userID int) (*models.User, *[]models.Post, error) {
+func userInfo(userID int) (*models.User, *[]models.Post, *[]models.Post, *[]models.Post, error) {
 	rows, err := db_manager.User_db.Query("SELECT UserID, Token, UserLevel, Name, Lastname, Nickname, Email, UserBirthdate, Password FROM Users WHERE UserID = ?", userID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	defer rows.Close()
 
@@ -160,34 +158,40 @@ func userInfo(userID int) (*models.User, *[]models.Post, error) {
 			&user.Password,
 		)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	} else {
-		return nil, nil, errors.New("user not found")
+		return nil, nil, nil, nil, errors.New("user not found")
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	Posts := []models.Post{}
-	// Fetch posts for the user
-	Posts, err = fetchPostsByUserID(user.UserID)
+	LD_Posts := []models.Post{}
+	LD_Comment := []models.Post{}
+	LD_Posts, LD_Comment, err = GetLikedDisliked(user.UserID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	return &user, &Posts, nil
+	Posts, err = fetchPostsByUserID(user.UserID)
+
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	return &user, &Posts, &LD_Posts, &LD_Comment, err
 }
 
 func fetchPostsByUserID(userID int) ([]models.Post, error) {
 
-	rows, err := db_manager.User_db.Query("SELECT PostID, ThreadID, Content, Likes, Dislikes ,CreatedAt FROM Posts WHERE UserID = ?", userID)
+	rows, err := db_manager.User_db.Query("SELECT PostID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE UserID = ?", userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	var posts []models.Post
-	for rows.Next() {
+	for rows.Next() { // <--- This part can be optimize
 		var post models.Post
 		err := rows.Scan(
 			&post.PostID,
@@ -231,4 +235,103 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 		}
 	}
 	return posts, nil
+}
+
+func fetchPostsByPostID(PostID int) (models.Post, error) {
+	rows, err := db_manager.User_db.Query("SELECT UserID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE PostID = ?", PostID)
+	if err != nil {
+		return models.Post{}, err
+	}
+	defer rows.Close()
+	var post models.Post
+	for rows.Next() {
+		err := rows.Scan(
+			&post.UserID,
+			&post.ThreadID,
+			&post.Content,
+			&post.LikeCounter,
+			&post.DislikeCounter,
+			&post.CreatedAt,
+		)
+		if err != nil {
+			return models.Post{}, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return models.Post{}, err
+	}
+	rows, err = db_manager.User_db.Query("SELECT CategoryIDs, Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
+	if err != nil {
+		return models.Post{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var category string
+		var title string
+		err := rows.Scan(
+			&category,
+			&title,
+		)
+		if err != nil {
+			return models.Post{}, err
+		}
+		categories := []string{}
+		categories, err = db_manager.ID2Category(category)
+		if err != nil {
+			return models.Post{}, err
+		}
+		post.Categories = categories
+		post.Title = title
+	}
+	return post, nil
+}
+
+func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
+	rows, err := db_manager.User_db.Query("SELECT PostID FROM PostLikesDislikes WHERE UserID = ?", UserID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	defer rows.Close()
+
+	var posts []models.Post
+	var com_posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		var postID int
+		_ = rows.Scan(&postID)
+		post, _ = fetchPostsByPostID(postID)
+		posts = append(posts, post)
+	}
+	rows, err = db_manager.User_db.Query("SELECT CommentID FROM CommentLikesDislikes WHERE UserID = ?", UserID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post models.Post
+		var commentID int
+		_ = rows.Scan(&commentID)
+		postID ,err:=GetPostIDByCommentID(commentID)
+		if err != nil {
+			return nil, nil, err
+		}
+		post, _ = fetchPostsByPostID(postID)
+		com_posts = append(com_posts, post)
+	}
+
+	return posts, com_posts, nil
+}
+
+func GetPostIDByCommentID(CommentID int) (int, error) {
+	rows, _ := db_manager.User_db.Query("SELECT PostID FROM Comments WHERE CommentID = ?", CommentID)
+	defer rows.Close()
+
+	var postID int
+	for rows.Next() {
+		_ = rows.Scan(&postID)
+	}
+	fmt.Println(postID)
+	return postID, nil
 }
