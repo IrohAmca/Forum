@@ -32,7 +32,7 @@ function checkToken() {
         $('#signOutButton').show();
         $('#postForm').show();
       } else {
-        $('#postForm').hide();
+        $('#postForm').show();
         $('#signOutButton').hide();
         $('#signInButton').show();
         $('#signUpButton').show();
@@ -178,7 +178,7 @@ function ld_submit(PostID, isLike) {
       if (data.success) {
         getAllPosts();
       } else {
-        alert("Error liking/disliking post: " + data.message);
+        alert("Please log in to the website first!!!");
       }
     })
     .catch(error => console.error('Error:', error));
@@ -198,7 +198,7 @@ function ld_comment_submit(CommentID,isLike){
       if (data.success) {
         getAllPosts();
       } else {
-        alert("Error liking/disliking comment: " + data.message);
+        alert("Please log in to the website first!!!");
       }
     })
     .catch(error => console.error('Error:', error));
@@ -261,7 +261,7 @@ window.submitComment = function (button) {
       if (data.success) {
         alert(data.message);
       } else {
-        alert("Error creating comment: " + data.message);
+        alert("Please log in to the website first!!!");
       }
     })
     .catch(error => console.error('Error:', error));
@@ -374,7 +374,7 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
       if (data.success) {
         location.reload();
       } else {
-        alert("Error creating post: " + data.message);
+        alert("Please log in to the website first!!!");
       }
     })
     .catch(error => console.error('Error:', error));
