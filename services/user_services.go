@@ -134,6 +134,7 @@ func ProfilePage(c *gin.Context) {
 		LD_Posts:   ld_post,
 		LD_Comment: ld_comment,
 	}
+	fmt.Println(data.Posts)
 	tpl.Execute(w, &data)
 }
 
@@ -201,6 +202,10 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 			&post.DislikeCounter,
 			&post.CreatedAt,
 		)
+		if err != nil {
+			return nil, err
+		}
+		post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
 		if err != nil {
 			return nil, err
 		}
@@ -283,6 +288,10 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 		post.Categories = categories
 		post.Title = title
 	}
+	post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
+		if err != nil {
+			return models.Post{}, err
+		}
 	return post, nil
 }
 
@@ -313,7 +322,7 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 		var post models.Post
 		var commentID int
 		_ = rows.Scan(&commentID)
-		postID ,err:=GetPostIDByCommentID(commentID)
+		postID, err := GetPostIDByCommentID(commentID)
 		if err != nil {
 			return nil, nil, err
 		}

@@ -180,17 +180,32 @@
     </div>
     {{end}}
 
-    <div class="user-posts">
-      <h2>User Posts</h2>
+    <ul>
       {{range .Posts}}
-      <div class="post">
-        <h4>{{.Title}}</h4>
-        <p>{{.Content}}</p>
-        <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
-        <p><strong>Created At:</strong> {{.CreatedAt}}</p>
-      </div>
+          <li>
+            <div class="post">
+              <h3>{{.Title}}</h3>
+              <p>{{.Content}}</p>
+              <p>Posted by: {{.Username}} on {{.CreatedAt}}</p>
+              <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+              {{if .Comment}}
+                  <h4>Comments:</h4>
+                  <ul>
+                  {{range .Comment}}
+                      <li>
+                          <p>{{.Content}}</p>
+                          <p>Commented by: {{.Username}} on {{.CreatedAt}}</p>
+                          <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+                      </li>
+                  {{end}}
+                  </ul>
+              {{else}}
+                  <p>No comments</p>
+              {{end}}
+            </div>
+          </li>
       {{end}}
-    </div>
+      </ul>
 
     <div class="user-posts">
       <h2>Liked Disliked Posts</h2>
@@ -200,6 +215,20 @@
         <p>{{.Content}}</p>
         <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
         <p><strong>Created At:</strong> {{.CreatedAt}}</p>
+        {{if .Comment}}
+            <h4>Comments:</h4>
+            <ul>
+            {{range .Comment}}
+                <li>
+                    <p>{{.Content}}</p>
+                    <p>Commented by: {{.Username}} on {{.CreatedAt}}</p>
+                    <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+                </li>
+            {{end}}
+            </ul>
+        {{else}}
+            <p>No comments</p>
+        {{end}}
       </div>
       {{end}}
     </div>
@@ -211,7 +240,20 @@
         <p>{{.Content}}</p>
         <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
         <p><strong>Created At:</strong> {{.CreatedAt}} by <a href="#">{{.Username}}</a></p>
-        <p>{{.Content}}</p>
+        {{if .Comment}}
+            <h4>Comments:</h4>
+            <ul>
+            {{range .Comment}}
+                <li>
+                    <p>{{.Content}}</p>
+                    <p>Commented by: {{.Username}} on {{.CreatedAt}}</p>
+                    <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+                </li>
+            {{end}}
+            </ul>
+        {{else}}
+            <p>No comments</p>
+        {{end}}
         <hr>
       </div>
       {{end}}
