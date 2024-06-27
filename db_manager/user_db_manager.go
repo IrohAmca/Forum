@@ -287,3 +287,62 @@ func InsertUser(username, email, password, token string) error {
 	fmt.Println("User added successfully.")
 	return nil
 }
+
+func CheckTokenFromSession(token string) bool {
+	var user string
+	row := User_db.QueryRow("SELECT Token FROM Session WHERE Token = ?", token)
+	err := row.Scan(&user)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+	}
+	if user == "" {
+		return false
+	}
+	return true
+}
+
+func InsertSession(token, cookie string) error {
+	statement, err := User_db.Prepare("INSERT INTO Session (Token, Cookie) VALUES (?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(token, cookie)
+	if err != nil {
+		log.Println("Error executing statement", err)
+		return err
+	}
+	return nil
+}
+
+func DeleteSession(token string) error {
+	statement, err := User_db.Prepare("DELETE FROM Session WHERE Token = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(token)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return err
+	}
+	return nil
+}
+func GetTokenByCookie(cookie string) (string, error) {
+	var token string
+	row := User_db.QueryRow("SELECT Token FROM Session WHERE Cookie = ?", cookie)
+	err := row.Scan(&token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no session with cookie %s", cookie)
+		}
+		return "", fmt.Errorf("error scanning row: %v", err)
+	}
+	return token, nil
+}

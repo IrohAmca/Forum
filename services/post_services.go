@@ -19,7 +19,12 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token, err := c.Cookie("token")
+	cookie, err := c.Cookie("cookie")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	token,err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -110,7 +115,12 @@ func CreateComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	token, err := c.Cookie("token")
+	cookie, err := c.Cookie("cookie")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	token ,err:= db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -164,7 +174,12 @@ func LikeDislikePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	token, err := c.Cookie("token")
+	cookie, err := c.Cookie("cookie")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	token ,err:= db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -202,7 +217,12 @@ func LikeDislikeComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	token, err := c.Cookie("token")
+	cookie, err := c.Cookie("cookie")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	token ,err:= db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return

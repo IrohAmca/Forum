@@ -1,5 +1,5 @@
 checkToken();
-
+var token;
 document.addEventListener('DOMContentLoaded', function () {
   getAllPosts();
 
@@ -10,18 +10,19 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function checkToken() {
-  var token = getCookie('token');
+  var cookie = getCookie('cookie');
   fetch('/check-token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ token: token })
+    body: JSON.stringify({ cookie: cookie })
   })
     .then(response => response.json())
     .then(data => {
       if (data.success) {
         console.log(data.username);
+        token = data.token;
         const initial = data.username.charAt(0).toUpperCase();
         const profileIconHTML = `
           <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
@@ -157,8 +158,6 @@ function deletePost(PostID) {
 }
 
 function getDeletePostButtonHtml(postToken, PostID) {
-  var token = getCookie('token');
-
   if (token == postToken) {
     return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')">Delete</button>';
   }
@@ -206,7 +205,7 @@ function ld_comment_submit(CommentID,isLike){
 
 
 window.writeComment = function (button) {
-  if (getCookie('token') === undefined) {
+  if (getCookie('cookie') === undefined) {
     alert('You must be logged in to comment');
     return;
   }
@@ -235,8 +234,6 @@ function DeleteComment(CommentID) {
 }
 
 function getDeleteCommentButtonHtml(commentToken, CommentID) {
-  var token = getCookie('token');
-
   if (token == commentToken) {
     return '<button class="delete-btn" onclick="DeleteComment(\'' + CommentID + '\')">Delete</button>';
   }

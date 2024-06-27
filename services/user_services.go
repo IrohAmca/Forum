@@ -15,6 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
+
 func GenerateToken(username string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,
@@ -27,6 +29,25 @@ func GenerateToken(username string) string {
 	return tokenString
 }
 
+func GenerateCookie(token string) string {
+	cookie := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": token,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
+	cookieString, err := cookie.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		panic("Failed to generate token")
+	}
+	return cookieString
+}
+
+func CheckSession( token string, c *gin.Context) {
+	is_session := db_manager.CheckTokenFromSession(token)
+	if is_session {
+		db_manager.DeleteSession(token)
+		c.SetCookie("cookie", "", -1, "/", "localhost", false, false)
+	}
+}
 func Login(c *gin.Context) {
 	var loginInput struct {
 		Email    string `json:"email" binding:"required"`
@@ -47,15 +68,22 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
 		return
 	}
-	username, _ := db_manager.Query_username(loginInput.Email)
-
+	username, _ := db_manager.Query_username(loginInput.Email) // <-- This part can be optimize
 	token, err := db_manager.QueryToken(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
+	cookie := GenerateCookie(token)
 
-	c.SetCookie("token", token, 3600, "/", "localhost", false, false)
+	CheckSession(token, c)
+	err = db_manager.InsertSession(token, cookie)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
 	c.Header("Authorization", token)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username, "token": token})
 }
@@ -78,6 +106,13 @@ func SignUp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": user.Username + " has been registered successfully"})
 }
 
+func SignOut(c *gin.Context) {
+	c.SetCookie("cookie", "", -1, "/", "localhost", false, false)
+	c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
+	c.Redirect(302, "/")
+	db_manager.DeleteSession(c.GetHeader("Authorization"))
+}
+
 func Authenticate(storedPassword, inputPassword string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword))
 	if err != nil {
@@ -89,21 +124,33 @@ func Authenticate(storedPassword, inputPassword string) error {
 
 func UserChecker(c *gin.Context) {
 	var user struct {
-		Token string `json:"token" binding:"required"`
+		Cookie string `json:"cookie" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	if db_manager.CheckToken(user.Token) {
-		username, err := db_manager.GetUserName(user.Token)
+	token, err := db_manager.GetTokenByCookie(user.Cookie)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	if db_manager.CheckToken(token) {
+		username, err := db_manager.GetUserName(token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username})
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username, "token": token})
 		return
-	} else {
+	}
+	if !db_manager.CheckToken(token) {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})
+		return
+	}
+	if db_manager.CheckTokenFromSession(token) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})
 		return
 	}

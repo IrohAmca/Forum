@@ -76,7 +76,7 @@ func CreateDatabase() {
 				CategoryNames TEXT NOT NULL UNIQUE,
 				CategoryDescription TEXT 
 			);`,
-		`CREATE TABLE IF NOT EXIST Session(
+		`CREATE TABLE IF NOT EXISTS Session(
 			Token TEXT,
 			Cookie TEXT
 			);`,

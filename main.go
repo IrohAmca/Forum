@@ -27,11 +27,7 @@ func main() {
 	r.POST("/sign-up", services.SignUp)
 	r.POST("/login", services.Login)
 	r.POST("/check-token", services.UserChecker)
-	r.POST("/sign-out", func(c *gin.Context) {
-		c.SetCookie("token", "", -1, "/", "localhost", false, false)
-		c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
-		c.Redirect(302, "/")
-	})
+	r.POST("/sign-out", services.SignOut)
 
 	// Post routes
 	r.POST("/get-posts", services.GetPosts)
