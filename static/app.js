@@ -184,6 +184,8 @@ function ld_submit(PostID, isLike) {
   //location.reload();
 }
 
+
+
 function ld_comment_submit(CommentID,isLike){
   fetch('/ld_comment', {
     method: 'POST',
@@ -262,7 +264,7 @@ window.submitComment = function (button) {
       if (data.success) {
         alert(data.message);
       } else {
-        alert("Please log in to the website first!!!");
+        alert("You cannot leave empty comments!!!");
       }
     })
     .catch(error => console.error('Error:', error));

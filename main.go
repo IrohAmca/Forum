@@ -3,6 +3,7 @@ package main
 import (
 	"forum/db_manager"
 	"forum/services"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,5 +40,5 @@ func main() {
 	r.POST("/create-comment", services.CreateComment)
 
 	// Thread routes
-	r.Run("localhost:8080")
+	r.Run(":8080")
 }
