@@ -230,8 +230,7 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 			if err != nil {
 				return nil, err
 			}
-			categories := []string{}
-			categories, err = db_manager.ID2Category(category)
+			categories, err := db_manager.ID2Category(category)
 			if err != nil {
 				return nil, err
 			}
@@ -280,8 +279,7 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 		if err != nil {
 			return models.Post{}, err
 		}
-		categories := []string{}
-		categories, err = db_manager.ID2Category(category)
+		categories, err := db_manager.ID2Category(category)
 		if err != nil {
 			return models.Post{}, err
 		}
@@ -289,9 +287,9 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 		post.Title = title
 	}
 	post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
-		if err != nil {
-			return models.Post{}, err
-		}
+	if err != nil {
+		return models.Post{}, err
+	}
 	return post, nil
 }
 
@@ -310,7 +308,7 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 		var postID int
 		_ = rows.Scan(&postID)
 		post, _ = fetchPostsByPostID(postID)
-		post.Comment ,err = db_manager.GetCommentsByPostID(post.PostID)
+		post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
 		if err != nil {
 			return nil, nil, err
 		}
