@@ -183,18 +183,18 @@
       {{range .Posts}}
             <div class="post">
               <h3>{{.Title}}</h3>
-              <p>{{.Content}}</p>
-              <p>Posted by: {{.Username}} on {{.CreatedAt}}</p>
+              <h5>{{.Content}}</h5>
+              <p><strong>Posted by:</strong> {{.Username}} on {{.CreatedAt}}</p>
               <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
-              <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+              <p><strong>Likes:</strong> {{.LikeCounter}}<strong> Dislikes:</strong> {{.DislikeCounter}}</p>
               {{if .Comment}}
                   <h4>Comments:</h4>
                   <ul>
                   {{range .Comment}}
                       <li>
                           <p>{{.Content}}</p>
-                          <p>Commented by: {{.Username}} on {{.CreatedAt}}</p>
-                          <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
+                          <p><strong>Commented by:</strong> {{.Username}} on {{.CreatedAt}}</p>
+                          <p><strong>Likes:</strong> {{.LikeCounter}} <strong>Dislikes:</strong> {{.DislikeCounter}}</p>
                       </li>
                   {{end}}
                   </ul>
@@ -205,31 +205,55 @@
       {{end}}
 
 
-    <div class="user-posts">
       <h2>Liked Disliked Posts</h2>
       {{range .LD_Posts}}
-      <div class="post">
-        <h4>{{.Title}}</h4>
-        <p>{{.Content}}</p>
-        <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
-        <p><strong>Created At:</strong> {{.CreatedAt}}</p>
-        {{if .Comment}}
-            <h4>Comments:</h4>
-            <ul>
-            {{range .Comment}}
-                <li>
-                    <p>{{.Content}}</p>
-                    <p>Commented by: {{.Username}} on {{.CreatedAt}}</p>
-                    <p>Likes: {{.LikeCounter}} Dislikes: {{.DislikeCounter}}</p>
-                </li>
-            {{end}}
-            </ul>
-        {{else}}
-            <p>No comments</p>
-        {{end}}
-      </div>
+            <div class="post">
+              <h3>{{.Title}}</h3>
+              <h5>{{.Content}}</h5>
+              <p><strong>Posted by:</strong> {{.Username}} on {{.CreatedAt}}</p>
+              <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
+              <p><strong>Likes: </strong>{{.LikeCounter}} <strong>Dislikes:</strong> {{.DislikeCounter}}</p>
+              {{if .Comment}}
+                  <h4>Comments:</h4>
+                  <ul>
+                  {{range .Comment}}
+                      <li>
+                          <p>{{.Content}}</p>
+                          <p><strong>Commented by:</strong> {{.Username}} on {{.CreatedAt}}</p>
+                          <p><strong>Likes:</strong> {{.LikeCounter}} <strong>Dislikes:</strong> {{.DislikeCounter}}</p>
+                      </li>
+                  {{end}}
+                  </ul>
+              {{else}}
+                  <p>No comments</p>
+              {{end}}
+            </div>
       {{end}}
-    </div>
+
+      <h2>Liked Disliked Comment</h2>
+      {{range .LD_Comment}}
+            <div class="post">
+              <h3>{{.Title}}</h3>
+              <h5>{{.Content}}</h5>
+              <p><strong>Posted by:</strong> {{.Username}} on {{.CreatedAt}}</p>
+              <p><strong>Categories: </strong>{{ range .Categories }}{{ . }} {{ end }}</p>
+              <p><strong>Likes: </strong>{{.LikeCounter}} <strong>Dislikes:</strong> {{.DislikeCounter}}</p>
+              {{if .Comment}}
+                  <h4>Comments:</h4>
+                  <ul>
+                  {{range .Comment}}
+                      <li>
+                          <p>{{.Content}}</p>
+                          <p><strong>Commented by:</strong> {{.Username}} on {{.CreatedAt}}</p>
+                          <p><strong>Likes:</strong> {{.LikeCounter}} <strong>Dislikes:</strong> {{.DislikeCounter}}</p>
+                      </li>
+                  {{end}}
+                  </ul>
+              {{else}}
+                  <p>No comments</p>
+              {{end}}
+            </div>
+      {{end}}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

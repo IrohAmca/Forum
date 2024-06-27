@@ -15,8 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
-
 func GenerateToken(username string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,
@@ -41,11 +39,12 @@ func GenerateCookie(token string) string {
 	return cookieString
 }
 
-func CheckSession( token string, c *gin.Context) {
+func CheckSession(token string, c *gin.Context) {
 	is_session := db_manager.CheckTokenFromSession(token)
 	if is_session {
 		db_manager.DeleteSession(token)
 		c.SetCookie("cookie", "", -1, "/", "localhost", false, false)
+		c.Redirect(302, "/")
 	}
 }
 func Login(c *gin.Context) {
@@ -355,7 +354,8 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 		var postID int
 		_ = rows.Scan(&postID)
 		post, _ = fetchPostsByPostID(postID)
-		post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
+		post.Comment, err = db_manager.GetCommentsByPostID(postID)
+		fmt.Println(post.Comment)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -376,6 +376,10 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 			return nil, nil, err
 		}
 		post, _ = fetchPostsByPostID(postID)
+		post.Comment, err = db_manager.GetCommentsByPostID(postID)
+		if err != nil {
+			return nil, nil, err
+		}
 		com_posts = append(com_posts, post)
 	}
 
