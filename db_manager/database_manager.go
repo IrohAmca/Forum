@@ -76,6 +76,10 @@ func CreateDatabase() {
 				CategoryNames TEXT NOT NULL UNIQUE,
 				CategoryDescription TEXT 
 			);`,
+		`CREATE TABLE IF NOT EXIST Session(
+			Token TEXT,
+			Cookie TEXT
+			);`,
 		`CREATE TABLE IF NOT EXISTS Comments (
 				CommentID INTEGER PRIMARY KEY AUTOINCREMENT,
 				UserID  INTEGER,
