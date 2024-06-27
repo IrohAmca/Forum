@@ -311,6 +311,9 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 		_ = rows.Scan(&postID)
 		post, _ = fetchPostsByPostID(postID)
 		post.Comment ,err = db_manager.GetCommentsByPostID(post.PostID)
+		if err != nil {
+			return nil, nil, err
+		}
 		posts = append(posts, post)
 	}
 	rows, err = db_manager.User_db.Query("SELECT CommentID FROM CommentLikesDislikes WHERE UserID = ?", UserID)
