@@ -1,15 +1,19 @@
 package main
 
 import (
+	"forum/db_manager"
+	"forum/services"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	createDatabase()
-	defer user_db.Close()
-	WriteAllData()
+	db_manager.CreateDatabase()
+	// db_manager.CloseDatabase() <-- Can be add
+	// writeAllData()
 	r := gin.Default()
 
+	// Default route
 	r.Static("/static", "./static")
 	r.Static("/png", "./png")
 	r.Static("/assets", "./assets")
@@ -17,20 +21,24 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.File("templates/index.html")
 	})
-	r.GET("/get-databyid", getinformation)
-	r.GET("/profile", func(c *gin.Context) {
-		c.File("templates/userProfile.html")
-	})
-	r.GET("/get-posts", getPosts)
-	r.POST("/sign-out", func(c *gin.Context) {
-		c.SetCookie("user_id", "", -1, "/", "localhost", false, false)
-		c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
-		c.Redirect(302, "/")
-	})
 
-	r.POST("/sign-up", SignUp)
-	r.POST("/login", login)
-	r.POST("/create-post", createPost)
+	// User routes
+	r.GET("/profile/:username", services.ProfilePage)
 
-	r.Run("localhost:8080")
+	r.POST("/sign-up", services.SignUp)
+	r.POST("/login", services.Login)
+	r.POST("/check-token", services.UserChecker)
+	r.POST("/sign-out", services.SignOut)
+
+	// Post routes
+	r.POST("/get-posts", services.GetPosts)
+	r.POST("ld_comment", services.LikeDislikeComment)
+	r.POST("/delete-comment", services.DeleteComment)
+	r.POST("/ld_post", services.LikeDislikePost)
+	r.POST("/create-post", services.CreatePost)
+	r.POST("/delete-post", services.DeletePost)
+	r.POST("/create-comment", services.CreateComment)
+
+	// Thread routes
+	r.Run(":8080")
 }
