@@ -159,7 +159,7 @@ function deletePost(PostID) {
 
 function getDeletePostButtonHtml(postToken, PostID) {
   if (token == postToken) {
-    return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')">Delete</button>';
+    return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
   }
   return '';
 }
@@ -237,10 +237,11 @@ function DeleteComment(CommentID) {
 
 function getDeleteCommentButtonHtml(commentToken, CommentID) {
   if (token == commentToken) {
-    return '<button class="delete-btn" onclick="DeleteComment(\'' + CommentID + '\')">Delete</button>';
+    return '<button class="delete-btn" onclick="DeleteComment(\'' + CommentID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
   }
   return '';
 }
+
 window.submitComment = function (button) {
   var replyForm = button.closest('.reply-form');
   var commentText = replyForm.querySelector('input').value;
@@ -312,16 +313,20 @@ function getAllPosts() {
           <hr>
           <div class="buttons">
             <button class="like-dislike-btn" onclick="ld_submit('${post.PostID}', true)">
-              <img src="../png/like.png" alt="Like Icon">Like
+              <img src="../png/like.png" alt="Like Icon">
               <span class="like-count">${post.LikeCounter}</span>
             </button>
             <button class="like-dislike-btn" onclick="ld_submit('${post.PostID}', false)">
-              <img src="../png/dislike.png" alt="Dislike Icon">Dislike
+              <img src="../png/dislike.png" alt="Dislike Icon">
+              
               <span class="dislike-count">${post.DislikeCounter}</span>
             </button>
-            <button class="reply-btn" onclick="writeComment(this)">Comment</button>
+            <button class="reply-btn" onclick="writeComment(this)"><img src="../png/comment.png" alt="Comment Icon"></button>
             ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
+
+    
           </div>
+
           <div class="reply-form" style="display:none;">
             <input type="text" class="form-control" placeholder="Write a comment...">
             <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
@@ -340,7 +345,7 @@ function getAllPosts() {
               + comment.Username +
               '</a></p><p>'
               + comment.Content +
-              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', true)"><img src="../png/like.png" alt="Like Icon">Like <span class="like-count">' + comment.LikeCounter + '</span></button><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon">Dislike <span class="dislike-count">' + comment.DislikeCounter + '</span></button>'
+              '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', true)"><img src="../png/like.png" alt="Like Icon"> <span class="like-count">' + comment.LikeCounter + '</span></button><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon"> <span class="dislike-count">' + comment.DislikeCounter + '</span></button>'
               + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
               '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
 
