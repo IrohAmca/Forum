@@ -16,17 +16,21 @@ func CreatePost(c *gin.Context) {
 		Categories []string `json:"categories" binding:"required"`
 	}
 	if err := c.ShouldBind(&post); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill in all the fields"})
+		return
+	}
+	if len(post.Categories) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please select at least one category"})
 		return
 	}
 	cookie, err := c.Cookie("cookie")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
 		return
 	}
 	token,err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
 		return
 	}
 	userID, err := db_manager.Query_ID(token)

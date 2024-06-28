@@ -273,7 +273,7 @@ window.submitComment = function (button) {
 
 function getAllPosts() {
   let selectedCategories = [];
-  let checkboxes = document.querySelectorAll('input[name="category"]:checked');
+  let checkboxes = document.querySelectorAll('input[name="category-filter"]:checked');
 
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
@@ -367,8 +367,7 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
   var checkboxes = document.querySelectorAll('input[name="category"]:checked');
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
-  }
-  );
+  });
   fetch('/create-post', {
     method: 'POST',
     headers: {
@@ -381,7 +380,7 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
       if (data.success) {
         location.reload();
       } else {
-        alert("Please log in to the website first!!!");
+        alert(data.message);
       }
     })
     .catch(error => console.error('Error:', error));
