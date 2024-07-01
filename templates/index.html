@@ -169,6 +169,33 @@
       .post-list {
         background-color:#f9f9f9;
       }
+      .login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .login-btn img {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .google-btn {
+            background-color: rgb(249, 245, 245);
+            color: black;
+        }
+
+        .github-btn {
+            background-color: #333;
+            color: white;
+        }
     </style>
   </head>
 
@@ -198,27 +225,37 @@
 
             <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
               <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="signInModalLabel">Log In</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  </div>
-                  <div class="modal-body">
-                    <form id="loginForm">
-                      <div class="form-group">
-                        <label for="loginEmail">Email:</label>
-                        <input type="email" class="form-control" id="loginEmail" required />
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title" id="signInModalLabel">Log In</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                       </div>
-                      <div class="form-group">
-                        <label for="loginPassword">Password:</label>
-                        <input type="password" class="form-control" id="loginPassword" required />
+                      <div class="modal-body">
+                          <form id="loginForm">
+                              <div class="form-group">
+                                  <label for="loginEmail">Email:</label>
+                                  <input type="email" class="form-control" id="loginEmail" required />
+                              </div>
+                              <div class="form-group">
+                                  <label for="loginPassword">Password:</label>
+                                  <input type="password" class="form-control" id="loginPassword" required />
+                              </div>
+                              <button type="submit" class="btn btn-primary">Log In</button>
+                          </form>
+                          <hr>
+                          <h6 class="text-center">Or log in with</h6>
+                          <button class="login-btn google-btn" onclick="loginWithGoogle()">
+                            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo">
+                              Google
+                          </button>
+                          <button class="login-btn github-btn" onclick="loginWithGithub()">
+                              <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo">
+                              GitHub
+                          </button>
                       </div>
-                      <button type="submit" class="btn btn-primary">Log In</button>
-                    </form>
                   </div>
-                </div>
               </div>
-            </div>
+          </div>
 
             <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
               <div class="modal-dialog">
@@ -251,6 +288,16 @@
                       <div id="passwordHelpBlock" class="form-text"></div>
                       <button type="submit" class="btn btn-secondary">Sign Up</button>
                     </form>
+                    <hr>
+                    <h6 class="text-center">Or sign up with</h6>
+                    <button class="login-btn google-btn" onclick="loginWithGoogle()">
+                      <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo">
+                        Google
+                    </button>
+                    <button class="login-btn github-btn" onclick="loginWithGithub()">
+                        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo">
+                        GitHub
+                    </button>
                   </div>
                 </div>
               </div>

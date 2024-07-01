@@ -75,6 +75,54 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     .catch(error => console.error('Error:', error));
 });
 
+// google ve github giriş fetch kısmı 
+
+  // Login with Google function
+  function loginWithGoogle() {
+    window.location.href = "/auth/google";
+}
+
+document.getElementById('google-login').addEventListener('click', () => {
+  fetch('/auth/google', {
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      credentials: 'include' // This will send the cookies along with the request
+  })
+  .then(response => {
+      if (response.redirected) {
+          window.location.href = response.url;
+      } else {
+          return response.json();
+      }
+  })
+  .catch(error => console.error('Error:', error));
+});
+
+// Login with GitHub function
+function loginWithGithub() {
+    window.location.href = "/auth/github";
+}
+
+document.getElementById('github-login').addEventListener('click', () => {
+  fetch('/auth/github', {
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+  })
+  .then(response => {
+      if (response.redirected) {
+          window.location.href = response.url;
+      } else {
+          return response.json();
+      }
+  })
+  .catch(error => console.error('Error:', error));
+});
+
 document.getElementById('signUpForm').addEventListener('submit', function (event) {
   event.preventDefault();
 

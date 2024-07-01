@@ -38,6 +38,8 @@ func main() {
 	r.POST("/create-post", services.CreatePost)
 	r.POST("/delete-post", services.DeletePost)
 	r.POST("/create-comment", services.CreateComment)
+	r.POST("/auth/google", services.CreateComment)
+	r.POST("/auth/github", services.CreateComment)
 
 	// Thread routes
 	r.Run(":8080")
