@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"forum/db_manager"
@@ -13,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 func GenerateToken(username string) string {
@@ -396,4 +400,62 @@ func GetPostIDByCommentID(CommentID int) (int, error) {
 	}
 	fmt.Println(postID)
 	return postID, nil
+}
+var ClientID = os.Getenv("GOOGLE_CLIENT_ID")
+var ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+var (
+	oauthConf = &oauth2.Config{
+		ClientID:     ClientID,
+		ClientSecret: ClientSecret,
+		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
+		Endpoint: google.Endpoint,
+	}
+	oauthStateString = "random"
+)
+
+func GoogleLogin(c *gin.Context) {
+	oauthStateString = "hello world"
+	url := oauthConf.AuthCodeURL(oauthStateString, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func GoogleCallback(c *gin.Context) {
+	if c.Request.FormValue("state") != oauthStateString {
+		fmt.Printf("invalid oauth state, expected '%s', got '%s'\n", oauthStateString, c.Request.FormValue("state"))
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+
+	code := c.Request.FormValue("code")
+	token, err := oauthConf.Exchange(context.Background(), code)
+	if err != nil {
+		fmt.Printf("oauthConf.Exchange() failed with '%s'\n", err)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+
+	resp, err := http.Get(fmt.Sprintf("https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s", token.AccessToken))
+	if err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	defer resp.Body.Close()
+
+	var googleUser struct {
+		ID            string `json:"id"`
+		Email         string `json:"email"`
+		VerifiedEmail bool   `json:"verified_email"`
+		Name          string `json:"name"`
+		Picture       string `json:"picture"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&googleUser); err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	print(googleUser.ID)
 }
