@@ -24,7 +24,9 @@ func main() {
 
 	// User routes
 	r.GET("/profile/:username", services.ProfilePage)
-
+	r.GET("/auth/google", services.GoogleLogin)
+	r.GET("/auth/google/callback", services.GoogleCallback)
+	
 	r.POST("/sign-up", services.SignUp)
 	r.POST("/login", services.Login)
 	r.POST("/check-token", services.UserChecker)
@@ -38,8 +40,6 @@ func main() {
 	r.POST("/create-post", services.CreatePost)
 	r.POST("/delete-post", services.DeletePost)
 	r.POST("/create-comment", services.CreateComment)
-	r.GET("/auth/google", services.GoogleLogin)
-	r.GET("/auth/google/callback", services.GoogleCallback)
 	// Thread routes
 	r.Run(":8080")
 }
