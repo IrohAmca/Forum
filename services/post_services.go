@@ -2,11 +2,12 @@ package services
 
 import (
 	"fmt"
+	"forum/db_manager"
+	"forum/models"
 	"net/http"
 	"strconv"
-	"forum/models"
+
 	"github.com/gin-gonic/gin"
-	"forum/db_manager"
 )
 
 func CreatePost(c *gin.Context) {
@@ -28,7 +29,7 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
 		return
 	}
-	token,err := db_manager.GetTokenByCookie(cookie)
+	token, err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
 		return
@@ -75,7 +76,7 @@ func GetPosts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	post ,err :=db_manager.GetFilteredPosts(categories.Categories, categories.Title)
+	post, err := db_manager.GetFilteredPosts(categories.Categories, categories.Title)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -124,7 +125,7 @@ func CreateComment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token ,err:= db_manager.GetTokenByCookie(cookie)
+	token, err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -183,7 +184,7 @@ func LikeDislikePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token ,err:= db_manager.GetTokenByCookie(cookie)
+	token, err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -210,7 +211,7 @@ func LikeDislikePost(c *gin.Context) {
 func LikeDislikeComment(c *gin.Context) {
 	var like struct {
 		CommentID string `json:"CommentID" binding:"required"`
-		IsLike bool   `json:"isLike"`
+		IsLike    bool   `json:"isLike"`
 	}
 	if err := c.ShouldBindJSON(&like); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
@@ -226,7 +227,7 @@ func LikeDislikeComment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token ,err:= db_manager.GetTokenByCookie(cookie)
+	token, err := db_manager.GetTokenByCookie(cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -237,9 +238,9 @@ func LikeDislikeComment(c *gin.Context) {
 		return
 	}
 	action := db_manager.LikeDislikeCommentActions{
-		UserID: userID,
+		UserID:    userID,
 		CommentID: commentID,
-		IsLike: like.IsLike,
+		IsLike:    like.IsLike,
 	}
 	err = db_manager.HandleLikeDislikeComment(action)
 	if err != nil {

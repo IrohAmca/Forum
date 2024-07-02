@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -345,4 +344,16 @@ func GetTokenByCookie(cookie string) (string, error) {
 		return "", fmt.Errorf("error scanning row: %v", err)
 	}
 	return token, nil
+}
+
+func GetTokenByName(name string) string{
+	var token string
+	row := User_db.QueryRow("SELECT Token FROM Users WHERE Nickname = ?", name)
+	err := row.Scan(&token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ""
+		}
+	}
+	return token
 }

@@ -78,24 +78,6 @@ function loginWithGithub() {
     window.location.href = "/auth/github";
 }
 
-document.getElementById('github-login').addEventListener('click', () => {
-  fetch('/auth/github', {
-      method: 'GET',
-      headers: {
-          'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-  })
-  .then(response => {
-      if (response.redirected) {
-          window.location.href = response.url;
-      } else {
-          return response.json();
-      }
-  })
-  .catch(error => console.error('Error:', error));
-});
-
 document.getElementById('signUpForm').addEventListener('submit', function (event) {
   event.preventDefault();
 
@@ -132,6 +114,7 @@ document.getElementById('signUpForm').addEventListener('submit', function (event
     .catch(error => console.error('Error:', error));
 
 });
+
 document.getElementById('signOutButton').addEventListener('click', function () {
   fetch('/sign-out', {
     method: 'POST',
@@ -144,7 +127,6 @@ document.getElementById('signOutButton').addEventListener('click', function () {
       if (data.success) {
         alert(data.message);
         location.reload();
-
       } else {
         alert("Error signing out: " + data.message);
       }

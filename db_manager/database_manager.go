@@ -23,10 +23,10 @@ func CreateDatabase() {
 				UserLevel INTEGER NOT NULL,
 				Name TEXT,
 				Lastname TEXT,
-				Nickname TEXT NOT NULL UNIQUE,
+				Nickname TEXT UNIQUE,
 				Email TEXT NOT NULL UNIQUE,
 				UserBirthdate DATE,
-				Password TEXT NOT NULL
+				Password TEXT
 			);`,
 		`CREATE TABLE IF NOT EXISTS Posts (
 				PostID INTEGER PRIMARY KEY AUTOINCREMENT,

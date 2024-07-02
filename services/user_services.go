@@ -137,7 +137,6 @@ func UserChecker(c *gin.Context) {
 		return
 	}
 	token, err := db_manager.GetTokenByCookie(user.Cookie)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -157,7 +156,7 @@ func UserChecker(c *gin.Context) {
 		return
 	}
 	if db_manager.CheckTokenFromSession(token) {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": true, "message": "Token is invalid"})
 		return
 	}
 }
@@ -470,6 +469,22 @@ func GoogleCallback(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
-	println(googleUser.Name)
-	println(googleUser.Email)
+	user_token :=db_manager.GetTokenByName(googleUser.Name)
+	if user_token == "" {
+		user_token = GenerateToken(googleUser.Name)
+		err := db_manager.InsertUser(googleUser.Name, googleUser.Email, "", user_token)
+		if err != nil {
+			c.Redirect(http.StatusTemporaryRedirect, "/")
+			return
+		}
+	}
+	cookie := GenerateCookie(user_token)
+	err = db_manager.InsertSession(user_token, cookie)
+	if err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
+	c.Header("Authorization", user_token)
+	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
