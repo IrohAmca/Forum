@@ -8,18 +8,21 @@ import (
 	"forum/db_manager"
 	"forum/models"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
 func GenerateToken(username string) string {
+	load_env()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
@@ -401,12 +404,17 @@ func GetPostIDByCommentID(CommentID int) (int, error) {
 	fmt.Println(postID)
 	return postID, nil
 }
-var ClientID = os.Getenv("GOOGLE_CLIENT_ID")
-var ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+func load_env() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+}
+
 var (
 	oauthConf = &oauth2.Config{
-		ClientID:     ClientID,
-		ClientSecret: ClientSecret,
+		ClientID:     "",
+		ClientSecret: "",
 		RedirectURL:  "http://localhost:8080/auth/google/callback",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -418,6 +426,11 @@ var (
 )
 
 func GoogleLogin(c *gin.Context) {
+	load_env()
+	var ClientID = os.Getenv("GOOGLE_CLIENT_ID")
+	var ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	oauthConf.ClientID = ClientID
+	oauthConf.ClientSecret = ClientSecret
 	oauthStateString = "hello world"
 	url := oauthConf.AuthCodeURL(oauthStateString, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	c.Redirect(http.StatusTemporaryRedirect, url)
@@ -457,5 +470,6 @@ func GoogleCallback(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
-	print(googleUser.ID)
+	println(googleUser.Name)
+	println(googleUser.Email)
 }
