@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -346,7 +347,7 @@ func GetTokenByCookie(cookie string) (string, error) {
 	return token, nil
 }
 
-func GetTokenByName(name string) string{
+func GetTokenByName(name string) string {
 	var token string
 	row := User_db.QueryRow("SELECT Token FROM Users WHERE Nickname = ?", name)
 	err := row.Scan(&token)
@@ -356,4 +357,26 @@ func GetTokenByName(name string) string{
 		}
 	}
 	return token
+}
+
+type User struct {
+	ID       int
+	Nickname string
+	Email    string
+	Password string
+	Token    string
+}
+
+// GetUserByEmail function fetches the user details based on the email address.
+func GetUserByEmail(email string) (*User, error) {
+	var user User
+	row := User_db.QueryRow("SELECT UserID, Nickname, Email, Password, Token FROM Users WHERE Email = ?", email)
+	err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.Password, &user.Token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no user with email %s", email)
+		}
+		return nil, fmt.Errorf("error scanning row: %v", err)
+	}
+	return &user, nil
 }

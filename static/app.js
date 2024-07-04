@@ -392,3 +392,11 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
 function loginWithGoogle() {
   window.location.href = "/auth/google";
 }
+
+function loginWithGithub() {
+  window.location.href = "/auth/github";
+}
+
+function loginWithFacebook(){
+  window.location.href="/auth/facebook";
+}

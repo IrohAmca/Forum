@@ -26,7 +26,11 @@ func main() {
 	r.GET("/profile/:username", services.ProfilePage)
 	r.GET("/auth/google", services.GoogleLogin)
 	r.GET("/auth/google/callback", services.GoogleCallback)
-	
+	r.GET("/auth/github", services.GithubLogin)
+	r.GET("/auth/github/callback", services.GithubCallback)
+	r.GET("/auth/facebook", services.FacebookLogin)
+	r.GET("/auth/facebook/callback", services.FacebookCallback)
+
 	r.POST("/sign-up", services.SignUp)
 	r.POST("/login", services.Login)
 	r.POST("/check-token", services.UserChecker)
