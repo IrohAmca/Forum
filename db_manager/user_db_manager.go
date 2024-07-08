@@ -4,10 +4,26 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func generateRandomString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
 
 func Query_email(email string) (string, error) {
 	var password string
@@ -128,11 +144,11 @@ func ID2Category(ids string) ([]string, error) {
 	var categories []string
 	dict := map[string]string{
 		"1": `Gündem`,
-		"2": `Ev&Yaşam`,
-		"3": `Para&Ekonomi`,
-		"4": `Moda&Stil`,
-		"5": `İnternet&Teknoloji`,
-		"6": `Eğitim&Kariyer`,
+		"2": `Ev & Yaşam`,
+		"3": `Para & Ekonomi`,
+		"4": `Moda & Stil`,
+		"5": `İnternet & Teknoloji`,
+		"6": `Eğitim & Kariyer`,
 	}
 	ids = strings.Replace(ids, ",", "", -1)
 	ids = strings.Replace(ids, " ", "", -1)
@@ -149,12 +165,12 @@ func ID2Category(ids string) ([]string, error) {
 func Category2ID(categories []string) ([]string, error) {
 	var ids []string
 	dict := map[string]string{
-		`Gündem`:             "1",
-		`Ev&Yaşam`:           "2",
-		`Para&Ekonomi`:       "3",
-		`Moda&Stil`:          "4",
-		`İnternet&Teknoloji`: "5",
-		`Eğitim&Kariyer`:     "6",
+		`Gündem`:               "1",
+		`Ev & Yaşam`:           "2",
+		`Para & Ekonomi`:       "3",
+		`Moda & Stil`:          "4",
+		`İnternet & Teknoloji`: "5",
+		`Eğitim & Kariyer`:     "6",
 	}
 	for _, category := range categories {
 		id, ok := dict[category]
@@ -257,25 +273,36 @@ func HashPassword(password string) string {
 	return string(hashedPassword)
 }
 
-func InsertUser(username, email, password, token string) error {
+func InsertUser(username, email, password, token string) (string, error) {
 	hashedPassword := HashPassword(password)
-
+	message := username + "has been registered successfully."
 	var exists bool
-	err := User_db.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE Nickname = ? OR Email = ?)", username, email).Scan(&exists)
+	err := User_db.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE Nickname = ?)", username).Scan(&exists)
 	if err != nil {
 		log.Println("Error checking for existing user:", err)
-		return err
+		return "", err
 	}
 
 	if exists {
-		fmt.Println("Error: Username or email already exists.")
-		return fmt.Errorf("username or email already exists")
+		fmt.Println("Error: Username already exists.")
+		username = username + generateRandomString(3)
+		message = "Username already exists. Your new username is: " + username
+	}
+	err = User_db.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE Email = ?)", email).Scan(&exists)
+	if err != nil {
+		log.Println("Error checking for existing user:", err)
+		return "", err
 	}
 
+	if exists {
+		fmt.Println("Error: Email already exists.")
+		return "", fmt.Errorf("Email already exists.")
+
+	}
 	statement, err := User_db.Prepare("INSERT INTO Users (UserLevel, Nickname, Token, Email, Password) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
-		return err
+		return "", err
 	}
 	defer statement.Close()
 
@@ -285,7 +312,7 @@ func InsertUser(username, email, password, token string) error {
 	}
 
 	fmt.Println("User added successfully.")
-	return nil
+	return message, nil
 }
 
 func CheckTokenFromSession(token string) bool {
