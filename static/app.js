@@ -31,7 +31,7 @@ function checkToken() {
         $('#signUpButton').hide();
         $('#signOutButton').show();
         $('#postForm').show();
-        alert('Logged in as ' + data.username + '!');
+        // alert('Logged in as ' + data.username + '!');
       } else {
         $('#postForm').show();
         $('#signOutButton').hide();
@@ -66,6 +66,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        alert(data.message);
         location.reload();
       } else {
         alert('Error logging in user: ' + data.message);
