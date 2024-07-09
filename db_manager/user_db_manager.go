@@ -140,15 +140,16 @@ func SetAdmin(id int) error {
 	}
 	return nil
 }
+
 func ID2Category(ids string) ([]string, error) {
 	var categories []string
 	dict := map[string]string{
 		"1": `Gündem`,
-		"2": `Ev & Yaşam`,
-		"3": `Para & Ekonomi`,
-		"4": `Moda & Stil`,
-		"5": `İnternet & Teknoloji`,
-		"6": `Eğitim & Kariyer`,
+		"2": `Ev&Yaşam`,
+		"3": `Para&Ekonomi`,
+		"4": `Moda&Stil`,
+		"5": `İnternet&Teknoloji`,
+		"6": `Eğitim&Kariyer`,
 	}
 	ids = strings.Replace(ids, ",", "", -1)
 	ids = strings.Replace(ids, " ", "", -1)
@@ -165,12 +166,12 @@ func ID2Category(ids string) ([]string, error) {
 func Category2ID(categories []string) ([]string, error) {
 	var ids []string
 	dict := map[string]string{
-		`Gündem`:               "1",
-		`Ev & Yaşam`:           "2",
-		`Para & Ekonomi`:       "3",
-		`Moda & Stil`:          "4",
-		`İnternet & Teknoloji`: "5",
-		`Eğitim & Kariyer`:     "6",
+		`Gündem`:             "1",
+		`Ev&Yaşam`:           "2",
+		`Para&Ekonomi`:       "3",
+		`Moda&Stil`:          "4",
+		`İnternet&Teknoloji`: "5",
+		`Eğitim&Kariyer`:     "6",
 	}
 	for _, category := range categories {
 		id, ok := dict[category]
