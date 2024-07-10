@@ -403,6 +403,31 @@ function loginWithFacebook(){
 
 // image- upload
 
+document.getElementById("image").addEventListener("change", function(event) {
+  var file = event.target.files[0];
+  if (file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+          var img = document.getElementById("preview");
+          img.src = e.target.result;
+          img.style.display = "block";
+          document.getElementById("cancel").style.display = "inline"; // İptal butonunu göster
+      }
+      reader.readAsDataURL(file);
+  }
+});
+
+document.getElementById("cancel").addEventListener("click", function() {
+  // Dosya input'unu temizle
+  document.getElementById("image").value = "";
+  // Önizleme görüntüsünü gizle
+  var img = document.getElementById("preview");
+  img.src = "";
+  img.style.display = "none";
+  // İptal butonunu gizle
+  this.style.display = "none";
+});
+
 document.getElementById("uploadForm").addEventListener("submit", function(event) {
   event.preventDefault();
 
@@ -420,7 +445,11 @@ document.getElementById("uploadForm").addEventListener("submit", function(event)
   })
   .then(response => response.json())
   .then(data => {
-      document.getElementById("message").innerText = data.message || data.error;
+      if (data.error) {
+          document.getElementById("message").innerText = data.error;
+      } else {
+          document.getElementById("message").innerText = data.message;
+      }
   })
   .catch(error => {
       console.error("Error:", error);

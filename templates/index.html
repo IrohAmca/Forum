@@ -196,6 +196,14 @@
             background-color: #333;
             color: white;
         }
+        #preview {
+            display: none;
+            width: 200px;
+            height: auto;
+        }
+        #cancel {
+            display: none;
+        }
     </style>
   </head>
 
@@ -421,6 +429,8 @@
                 </div>
                 <form id="uploadForm" enctype="multipart/form-data">
                   <input type="file" name="image" id="image" accept="image/*" required><br>
+        <img id="preview" alt="Image Preview"><br>
+        <button type="button" id="cancel">Cancel</button><br>
                   <button type="submit">Upload</button>
               </form>
              
