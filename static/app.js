@@ -400,3 +400,30 @@ function loginWithGithub() {
 function loginWithFacebook(){
   window.location.href="/auth/facebook";
 }
+
+// image- upload
+
+document.getElementById("uploadForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  var formData = new FormData(this);
+  var file = document.getElementById("image").files[0];
+
+  if (file.size > 20 * 1024 * 1024) {
+      document.getElementById("message").innerText = "File size exceeds 20 MB";
+      return;
+  }
+
+  fetch("/upload", {
+      method: "POST",
+      body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+      document.getElementById("message").innerText = data.message || data.error;
+  })
+  .catch(error => {
+      console.error("Error:", error);
+      document.getElementById("message").innerText = "An error occurred";
+  });
+});

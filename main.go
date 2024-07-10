@@ -44,6 +44,7 @@ func main() {
 	r.POST("/create-post", services.CreatePost)
 	r.POST("/delete-post", services.DeletePost)
 	r.POST("/create-comment", services.CreateComment)
+	r.POST("/upload",services.UploadImage)
 	// Thread routes
 	r.Run(":8080")
 }

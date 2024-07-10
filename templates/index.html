@@ -419,7 +419,11 @@
                     </div>
                   </div>
                 </div>
-
+                <form id="uploadForm" enctype="multipart/form-data">
+                  <input type="file" name="image" id="image" accept="image/*" required><br>
+                  <button type="submit">Upload</button>
+              </form>
+             
                 <textarea class="form-control mb-2" id="postContent" rows="3" placeholder="Post Content"></textarea>
 
                 <button type="submit" class="btn btn-primary">Create Post</button>
