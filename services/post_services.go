@@ -4,24 +4,48 @@ import (
 	"fmt"
 	"forum/db_manager"
 	"forum/models"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+func file2Blob(file *multipart.FileHeader) ([]byte, error) {
+	src, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
+
+	return ioutil.ReadAll(src)
+}
+
 func CreatePost(c *gin.Context) {
 	var post struct {
-		Title      string   `json:"title" binding:"required"`
-		Content    string   `json:"content" binding:"required"`
-		Categories []string `json:"categories" binding:"required"`
+		Title      string
+		Content    string
+		Categories []string
 	}
-	if err := c.ShouldBind(&post); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill in all the fields"})
+	post.Title = c.PostForm("title")
+	post.Content = c.PostForm("content")
+	post.Categories = c.PostFormArray("categories")
+
+	if post.Title == "" || post.Content == "" || len(post.Categories) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill all the fields"})
 		return
 	}
-	if len(post.Categories) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please select at least one category"})
+	file, err := c.FormFile("image")
+	blob, err := file2Blob(file)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
 		return
 	}
 	cookie, err := c.Cookie("cookie")
@@ -44,7 +68,7 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	db_manager.InsertPost(threadID, userID, post.Content)
+	db_manager.InsertPost(threadID, userID, post.Content, blob)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
 }
 
@@ -248,4 +272,20 @@ func LikeDislikeComment(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Like/Dislike action successful"})
+}
+
+func GetImage(c *gin.Context) {
+	filename := c.Param("filename")
+	postID, err := strconv.Atoi(filename)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
+		return
+	}
+
+	image, err := db_manager.GetImage(postID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.Data(http.StatusOK, "image/png", image)
 }

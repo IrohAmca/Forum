@@ -25,6 +25,7 @@ func CreateDatabase() {
 				Lastname TEXT,
 				Nickname TEXT UNIQUE,
 				Email TEXT NOT NULL UNIQUE,
+				Image BLOB,
 				UserBirthdate DATE,
 				Password TEXT
 			);`,
@@ -33,6 +34,7 @@ func CreateDatabase() {
 				ThreadID INTEGER,
 				UserID INTEGER,
 				Content TEXT NOT NULL,
+				Image BLOB,
 				Likes INTEGER,
 				Dislikes INTEGER,
 				CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,

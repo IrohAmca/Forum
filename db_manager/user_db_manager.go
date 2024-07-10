@@ -165,63 +165,6 @@ func Category2ID(categories []string) ([]string, error) {
 	}
 	return ids, nil
 }
-
-func InsertPost(threadID, userID int, content string) error {
-	statement, err := User_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
-	if err != nil {
-		log.Println("Error preparing statement:", err)
-		return err
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(threadID, userID, content, 0, 0)
-	if err != nil {
-		log.Println("Error executing statement,", err)
-		return err
-	}
-
-	fmt.Println("Data inserted successfully.")
-	return nil
-}
-
-func InsertThread(userID int, title string, categories []string) (int, error) {
-	ids, err := Category2ID(categories)
-	if err != nil {
-		return 0, err
-	}
-	categoryIDs := ""
-	for _, id := range ids {
-		categoryIDs += id + ","
-	}
-	categoryIDs = categoryIDs[:len(categoryIDs)-1]
-	statement, err := User_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
-	if err != nil {
-		log.Println("Error preparing statement:", err)
-		return 0, err
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(userID, title, categoryIDs)
-	if err != nil {
-		log.Println("Error executing statement:", err)
-		return 0, err
-	}
-	statement, err = User_db.Prepare("SELECT ThreadID FROM Threads WHERE Title = ?")
-	if err != nil {
-		log.Println("Error preparing statement:", err)
-		return 0, err
-	}
-	defer statement.Close()
-
-	var id int
-	row := statement.QueryRow(title)
-	err = row.Scan(&id)
-	if err != nil {
-		log.Println("Error scanning row:", err)
-		return 0, err
-	}
-	return id, nil
-}
 func GetUserName(token string) (string, error) {
 	var username string
 	row := User_db.QueryRow("SELECT Nickname FROM Users WHERE Token = ?", token)

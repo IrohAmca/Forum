@@ -8,6 +8,7 @@ type Post struct {
 	UserID         int
 	Username       string
 	Content        string
+	Image          string
 	Categories     []string
 	CreatedAt      string
 	LikeCounter    int

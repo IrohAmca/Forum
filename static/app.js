@@ -75,7 +75,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     .catch(error => console.error('Error:', error));
 });
 function loginWithGithub() {
-    window.location.href = "/auth/github";
+  window.location.href = "/auth/github";
 }
 
 document.getElementById('signUpForm').addEventListener('submit', function (event) {
@@ -189,7 +189,7 @@ function ld_submit(PostID, isLike) {
 
 
 
-function ld_comment_submit(CommentID,isLike){
+function ld_comment_submit(CommentID, isLike) {
   fetch('/ld_comment', {
     method: 'POST',
     headers: {
@@ -298,6 +298,7 @@ function getAllPosts() {
         postList.innerHTML = '';
         var posts = data.posts;
         posts.forEach(post => {
+          console.log(post.Image)
           var newPost = document.createElement('article');
           newPost.classList.add('post');
           newPost.innerHTML = `<h2 class="blog-post-title">
@@ -308,6 +309,9 @@ function getAllPosts() {
             <a href="/profile/${post.Username}">
               ${post.Username}
             </a>
+          </p>
+          <p>
+          <img src="${post.Image}" alt="Post Image" style="width: 40%; height: 50%;">
           </p>
           <p>
             <div class="post-categories">${post.Categories}</div>
@@ -338,7 +342,6 @@ function getAllPosts() {
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
           var comments = post.Comment;
-          console.log(comments);
           comments.forEach(comment => {
             var newComment = document.createElement('div');
             newComment.classList.add('comment');
@@ -371,12 +374,21 @@ document.getElementById('postForm').addEventListener('submit', function (event) 
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
   });
+
+  var fileInput = document.getElementById('image');
+  var image = fileInput.files[0];
+  var formData = new FormData();
+
+  formData.append('title', title);
+  formData.append('content', content);
+  selectedCategories.forEach((category) => {
+    formData.append('categories', category);
+  });
+  formData.append('image', image);
+
   fetch('/create-post', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ title: title, content: content, categories: selectedCategories })
+    body: formData
   })
     .then(response => response.json())
     .then(data => {
@@ -397,27 +409,27 @@ function loginWithGithub() {
   window.location.href = "/auth/github";
 }
 
-function loginWithFacebook(){
-  window.location.href="/auth/facebook";
+function loginWithFacebook() {
+  window.location.href = "/auth/facebook";
 }
 
 // image- upload
 
-document.getElementById("image").addEventListener("change", function(event) {
+document.getElementById("image").addEventListener("change", function (event) {
   var file = event.target.files[0];
   if (file) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-          var img = document.getElementById("preview");
-          img.src = e.target.result;
-          img.style.display = "block";
-          document.getElementById("cancel").style.display = "inline"; // İptal butonunu göster
-      }
-      reader.readAsDataURL(file);
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = document.getElementById("preview");
+      img.src = e.target.result;
+      img.style.display = "block";
+      document.getElementById("cancel").style.display = "inline"; // İptal butonunu göster
+    }
+    reader.readAsDataURL(file);
   }
 });
 
-document.getElementById("cancel").addEventListener("click", function() {
+document.getElementById("cancel").addEventListener("click", function () {
   // Dosya input'unu temizle
   document.getElementById("image").value = "";
   // Önizleme görüntüsünü gizle
@@ -428,31 +440,31 @@ document.getElementById("cancel").addEventListener("click", function() {
   this.style.display = "none";
 });
 
-document.getElementById("uploadForm").addEventListener("submit", function(event) {
+document.getElementById("uploadForm").addEventListener("submit", function (event) {
   event.preventDefault();
 
   var formData = new FormData(this);
   var file = document.getElementById("image").files[0];
 
   if (file.size > 20 * 1024 * 1024) {
-      document.getElementById("message").innerText = "File size exceeds 20 MB";
-      return;
+    document.getElementById("message").innerText = "File size exceeds 20 MB";
+    return;
   }
 
   fetch("/upload", {
-      method: "POST",
-      body: formData
+    method: "POST",
+    body: formData
   })
-  .then(response => response.json())
-  .then(data => {
+    .then(response => response.json())
+    .then(data => {
       if (data.error) {
-          document.getElementById("message").innerText = data.error;
+        document.getElementById("message").innerText = data.error;
       } else {
-          document.getElementById("message").innerText = data.message;
+        document.getElementById("message").innerText = data.message;
       }
-  })
-  .catch(error => {
+    })
+    .catch(error => {
       console.error("Error:", error);
       document.getElementById("message").innerText = "An error occurred";
-  });
+    });
 });

@@ -122,19 +122,18 @@
       .buttons button {
         margin-left: 10px;
       }
-     .reply-btn img {
+      .reply-btn img {
         width: 25px;
         height: 25px;
         margin-right: 5px;
       }
-      
       
       .delete-btn img {
         width: 20px;
         height: 20px;
         margin-right: 5px;
       }
-     
+      
       .like-dislike-btn img {
         width: 20px;
         height: 20px;
@@ -167,43 +166,43 @@
         color: #666;
       }
       .post-list {
-        background-color:#f9f9f9;
+        background-color: #f9f9f9;
       }
       .login-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 10px 0;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .login-btn img {
-            margin-right: 10px;
-            width: 20px;
-            height: 20px;
-        }
-
-        .google-btn {
-            background-color: rgb(249, 245, 245);
-            color: black;
-        }
-
-        .github-btn {
-            background-color: #333;
-            color: white;
-        }
-        #preview {
-            display: none;
-            width: 200px;
-            height: auto;
-        }
-        #cancel {
-            display: none;
-        }
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+        padding: 10px;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      .login-btn img {
+        margin-right: 10px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .google-btn {
+        background-color: rgb(249, 245, 245);
+        color: black;
+      }
+      
+      .github-btn {
+        background-color: #333;
+        color: white;
+      }
+      #preview {
+        display: none;
+        width: 200px;
+        height: auto;
+      }
+      #cancel {
+        display: none;
+      }
     </style>
   </head>
 
@@ -232,41 +231,41 @@
             </button>
             <div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
               <div class="modal-dialog">
-                  <div class="modal-content">
-                      <div class="modal-header">
-                          <h5 class="modal-title" id="signInModalLabel">Log In</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                      </div>
-                      <div class="modal-body">
-                          <form id="loginForm">
-                              <div class="form-group">
-                                  <label for="loginEmail">Email:</label>
-                                  <input type="email" class="form-control" id="loginEmail" required />
-                              </div>
-                              <div class="form-group">
-                                  <label for="loginPassword">Password:</label>
-                                  <input type="password" class="form-control" id="loginPassword" required />
-                              </div>
-                              <button type="submit" class="btn btn-primary">Log In</button>
-                          </form>
-                          <hr>
-                          <h6 class="text-center">Or log in with</h6>
-                          <button class="login-btn google-btn" onclick="loginWithGoogle()">
-                            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo">
-                              Google
-                          </button>
-                          <button class="login-btn github-btn" onclick="loginWithGithub()">
-                              <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo">
-                              GitHub
-                          </button>
-                          <button class="login-btn facebook-btn" onclick="loginWithFacebook()">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo">
-                            Facebook
-                        </button>
-                      </div>
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="signInModalLabel">Log In</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                   </div>
+                  <div class="modal-body">
+                    <form id="loginForm">
+                      <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" class="form-control" id="loginEmail" required />
+                      </div>
+                      <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" class="form-control" id="loginPassword" required />
+                      </div>
+                      <button type="submit" class="btn btn-primary">Log In</button>
+                    </form>
+                    <hr />
+                    <h6 class="text-center">Or log in with</h6>
+                    <button class="login-btn google-btn" onclick="loginWithGoogle()">
+                      <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo" />
+                      Google
+                    </button>
+                    <button class="login-btn github-btn" onclick="loginWithGithub()">
+                      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" />
+                      GitHub
+                    </button>
+                    <button class="login-btn facebook-btn" onclick="loginWithFacebook()">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo" />
+                      Facebook
+                    </button>
+                  </div>
+                </div>
               </div>
-          </div>
+            </div>
 
             <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
               <div class="modal-dialog">
@@ -299,20 +298,20 @@
                       <div id="passwordHelpBlock" class="form-text"></div>
                       <button type="submit" class="btn btn-secondary">Sign Up</button>
                     </form>
-                    <hr>
+                    <hr />
                     <h6 class="text-center">Or sign up with</h6>
                     <button class="login-btn google-btn" onclick="loginWithGoogle()">
-                      <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo">
-                        Google
+                      <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google Logo" />
+                      Google
                     </button>
                     <button class="login-btn github-btn" onclick="loginWithGithub()">
-                        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo">
-                        GitHub
+                      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" />
+                      GitHub
                     </button>
                     <button class="login-btn facebook-btn" onclick="loginWithFacebook()">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo" />
                       Facebook
-                  </button>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -332,33 +331,33 @@
         <div class="form-group">
           <button style="margin-top: 1rem;" class="btn btn-light dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Categories</button>
           <div class="dropdown-menu" aria-labelledby="categoryDropdown">
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category1" name="category-filter" value="Gündem" />
-                  <label class="form-check-label" for="category1">Gündem</label>
-              </div>
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category2" name="category-filter" value="Ev&Yaşam" />
-                  <label class="form-check-label" for="category2">Ev&Yaşam</label>
-              </div>
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category3" name="category-filter" value="Para&Ekonomi" />
-                  <label class="form-check-label" for="category3">Para&Ekonomi</label>
-              </div>
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category4" name="category-filter" value="Moda&Stil" />
-                  <label class="form-check-label" for="category4">Moda&Stil</label>
-              </div>
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category5" name="category-filter" value="İnternet&Teknoloji" />
-                  <label class="form-check-label" for="category5">İnternet&Teknoloji</label>
-              </div>
-              <div class="form-check">
-                  <input class="form-check-input" type="radio" id="category6" name="category-filter" value="Eğitim&Kariyer" />
-                  <label class="form-check-label" for="category6">Eğitim&Kariyer</label>
-              </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category1" name="category-filter" value="Gündem" />
+              <label class="form-check-label" for="category1">Gündem</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category2" name="category-filter" value="Ev&Yaşam" />
+              <label class="form-check-label" for="category2">Ev&Yaşam</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category3" name="category-filter" value="Para&Ekonomi" />
+              <label class="form-check-label" for="category3">Para&Ekonomi</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category4" name="category-filter" value="Moda&Stil" />
+              <label class="form-check-label" for="category4">Moda&Stil</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category5" name="category-filter" value="İnternet&Teknoloji" />
+              <label class="form-check-label" for="category5">İnternet&Teknoloji</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="category6" name="category-filter" value="Eğitim&Kariyer" />
+              <label class="form-check-label" for="category6">Eğitim&Kariyer</label>
+            </div>
           </div>
-      </div>
-      
+        </div>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
@@ -427,19 +426,17 @@
                     </div>
                   </div>
                 </div>
-                <form id="uploadForm" enctype="multipart/form-data">
-                  <input type="file" name="image" id="image" accept="image/*" required><br>
-        <img id="preview" alt="Image Preview"><br>
-        <button type="button" id="cancel">Cancel</button><br>
-                  <button type="submit">Upload</button>
-              </form>
-             
+                    <input type="file" name="image" id="image" enctype="multipart/form-data"><br/>
+                  <img id="preview" alt="Image Preview" />
+                  <button type="button" id="cancel">Cancel</button>
                 <textarea class="form-control mb-2" id="postContent" rows="3" placeholder="Post Content"></textarea>
 
                 <button type="submit" class="btn btn-primary">Create Post</button>
               </form>
             </div>
-            <div class="post-list"><br></div>
+            <div class="post-list">
+              <br />
+            </div>
           </div>
           <!-- kategori bitimi -->
 

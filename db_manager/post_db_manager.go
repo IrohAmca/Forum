@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"forum/models"
+	"io/ioutil"
 	"log"
+	"mime/multipart"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -101,11 +104,13 @@ func GetAllPosts() ([]models.Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-
+		url := "http://localhost:8080/images/" + strconv.Itoa(postID)
+		fmt.Println(url)
 		post := models.Post{
 			PostID:         postID,
 			ThreadID:       threadID,
 			Content:        content,
+			Image:          url,
 			UserToken:      userToken,
 			Username:       username,
 			LikeCounter:    likes,
@@ -352,6 +357,26 @@ func HandleLikeDislikeComment(action LikeDislikeCommentActions) error {
 	return nil
 }
 
+func blob2File(blob []byte, filename string) (*multipart.FileHeader, error) {
+	tmpfile, err := ioutil.TempFile("", filename)
+	if err != nil {
+		return nil, err
+	}
+	defer tmpfile.Close()
+
+	_, err = tmpfile.Write(blob)
+	if err != nil {
+		return nil, err
+	}
+
+	fileHeader := &multipart.FileHeader{
+		Filename: tmpfile.Name(),
+		Size:     int64(len(blob)),
+	}
+
+	return fileHeader, nil
+}
+
 func GetFilteredPosts(categories []string, title string) ([]models.Post, error) {
 	var posts []models.Post
 
@@ -465,10 +490,12 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
+		url := "http://localhost:8080/images/" + strconv.Itoa(postID)
 		post := models.Post{
 			PostID:         postID,
 			ThreadID:       threadID,
 			Content:        content,
+			Image:          url,
 			UserToken:      userToken,
 			Username:       username,
 			LikeCounter:    likes,
@@ -566,7 +593,7 @@ func InsertComment(userID, postID int, content string) error {
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(userID, postID, content,0,0)
+	_, err = statement.Exec(userID, postID, content, 0, 0)
 	if err != nil {
 		log.Println("Error executing statement,", err)
 		return err
@@ -603,4 +630,70 @@ func GetPostByID(postID int) ([]models.Post, error) {
 	posts = append(posts, post)
 
 	return posts, nil
+}
+func InsertPost(threadID, userID int, content string, image []byte) error {
+	statement, err := User_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Image, Likes, Dislikes) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(threadID, userID, content, image, 0, 0)
+	if err != nil {
+		log.Println("Error executing statement,", err)
+		return err
+	}
+
+	fmt.Println("Data inserted successfully.")
+	return nil
+}
+
+func InsertThread(userID int, title string, categories []string) (int, error) {
+	ids, err := Category2ID(categories)
+	if err != nil {
+		return 0, err
+	}
+	categoryIDs := ""
+	for _, id := range ids {
+		categoryIDs += id + ","
+	}
+	categoryIDs = categoryIDs[:len(categoryIDs)-1]
+	statement, err := User_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return 0, err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(userID, title, categoryIDs)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return 0, err
+	}
+	statement, err = User_db.Prepare("SELECT ThreadID FROM Threads WHERE Title = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return 0, err
+	}
+	defer statement.Close()
+
+	var id int
+	row := statement.QueryRow(title)
+	err = row.Scan(&id)
+	if err != nil {
+		log.Println("Error scanning row:", err)
+		return 0, err
+	}
+	return id, nil
+}
+
+func GetImage(postID int) ([]byte, error) {
+	row := User_db.QueryRow("SELECT Image FROM Posts WHERE PostID = ?", postID)
+	var image []byte
+	err := row.Scan(&image)
+	if err != nil {
+		return nil, err
+	}
+	return image, nil
 }
