@@ -102,12 +102,14 @@ func SetMod(id int) error {
 	if err != nil {
 		return err
 	}
-	defer statement.Close()
 
 	_, err = statement.Exec(id)
 	if err != nil {
+		statement.Close()
 		return err
 	}
+
+	statement.Close()
 	return nil
 }
 
@@ -116,14 +118,17 @@ func SetAdmin(id int) error {
 	if err != nil {
 		return err
 	}
-	defer statement.Close()
 
 	_, err = statement.Exec(id)
 	if err != nil {
+		statement.Close()
 		return err
 	}
+
+	statement.Close()
 	return nil
 }
+
 func ID2Category(ids string) ([]string, error) {
 	var categories []string
 	dict := map[string]string{

@@ -4,9 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"forum/models"
-	"io/ioutil"
 	"log"
-	"mime/multipart"
 	"strconv"
 	"strings"
 	"time"
@@ -82,7 +80,8 @@ func GetCategoriesByID(id string) ([]string, error) {
 
 func GetAllPosts() ([]models.Post, error) {
 	posts := []models.Post{}
-	rows, err := User_db.Query("SELECT PostID, ThreadID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts")
+
+	rows, err := User_db.Query("SELECT PostID, ThreadID, UserID, Image, Content, CreatedAt, Likes, Dislikes FROM Posts")
 	if err != nil {
 		log.Println("Error querying data:", err)
 		return nil, err
@@ -90,73 +89,83 @@ func GetAllPosts() ([]models.Post, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var postID, threadID, userID int
-		var content string
+		var post models.Post
+		var image []byte
 		var createdAt time.Time
-		var likes, dislikes int
-		err := rows.Scan(&postID, &threadID, &userID, &content, &createdAt, &likes, &dislikes)
+		err := rows.Scan(&post.PostID, &post.ThreadID, &post.UserID, &image, &post.Content, &createdAt, &post.LikeCounter, &post.DislikeCounter)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		userToken, username, err := QueryTokenID(userID)
+
+		post.Image = ""
+		if image != nil {
+			post.Image = "http://localhost:8080/images/" + strconv.Itoa(post.PostID)
+		}
+
+		userToken, username, err := QueryTokenID(post.UserID)
 		if err != nil {
-			log.Println("Error scanning row:", err)
+			log.Println("Error querying user token:", err)
 			return nil, err
 		}
-		url := "http://localhost:8080/images/" + strconv.Itoa(postID)
-		fmt.Println(url)
-		post := models.Post{
-			PostID:         postID,
-			ThreadID:       threadID,
-			Content:        content,
-			Image:          url,
-			UserToken:      userToken,
-			Username:       username,
-			LikeCounter:    likes,
-			DislikeCounter: dislikes,
-			CreatedAt:      createdAt.Format("2006-01-02 15:04:05"),
-		}
+
+		post.UserToken = userToken
+		post.Username = username
+		post.CreatedAt = createdAt.Format("2006-01-02 15:04:05")
+
 		posts = append(posts, post)
 	}
 
-	for i, post := range posts {
-		rows, err = User_db.Query("SELECT Title, CategoryIDs FROM Threads WHERE ThreadID = ?", post.ThreadID)
-		if err != nil {
-			log.Println("Error querying data:", err)
-		}
-		defer rows.Close()
-		rows.Next()
-		var title string
-		var categoryIDs string
-		err := rows.Scan(&title, &categoryIDs)
-		if err != nil {
-			log.Println("Error scanning row:", err)
-			return nil, err
-		}
-		categories, err := GetCategoriesByID(categoryIDs)
-		if err != nil {
-			log.Println("Error querying data:", err)
-		}
-		posts[i].Categories = categories
-		if err != nil {
-			log.Println("Error scanning row:", err)
-			return nil, err
-		}
-		posts[i].Title = title
+	if err := addThreadDetails(posts); err != nil {
+		return nil, err
 	}
 
+	if err := addCommentsToPosts(posts); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func addThreadDetails(posts []models.Post) error {
+	for i, post := range posts {
+		threadRows, err := User_db.Query("SELECT Title, CategoryIDs FROM Threads WHERE ThreadID = ?", post.ThreadID)
+		if err != nil {
+			log.Println("Error querying thread data:", err)
+			return err
+		}
+		defer threadRows.Close()
+
+		if threadRows.Next() {
+			var title, categoryIDs string
+			if err := threadRows.Scan(&title, &categoryIDs); err != nil {
+				log.Println("Error scanning thread row:", err)
+				return err
+			}
+
+			categories, err := GetCategoriesByID(categoryIDs)
+			if err != nil {
+				log.Println("Error querying categories:", err)
+				return err
+			}
+
+			posts[i].Title = title
+			posts[i].Categories = categories
+		}
+	}
+	return nil
+}
+
+func addCommentsToPosts(posts []models.Post) error {
 	for i, post := range posts {
 		comments, err := GetCommentsByPostID(post.PostID)
 		if err != nil {
 			log.Println("Error getting comments:", err)
-			return nil, err
+			return err
 		}
-		if comments != nil {
-			posts[i].Comment = comments
-		}
+		posts[i].Comment = comments
 	}
-	return posts, nil
+	return nil
 }
 
 func DeletePostFromDB(PostID int) error {
@@ -357,26 +366,6 @@ func HandleLikeDislikeComment(action LikeDislikeCommentActions) error {
 	return nil
 }
 
-func blob2File(blob []byte, filename string) (*multipart.FileHeader, error) {
-	tmpfile, err := ioutil.TempFile("", filename)
-	if err != nil {
-		return nil, err
-	}
-	defer tmpfile.Close()
-
-	_, err = tmpfile.Write(blob)
-	if err != nil {
-		return nil, err
-	}
-
-	fileHeader := &multipart.FileHeader{
-		Filename: tmpfile.Name(),
-		Size:     int64(len(blob)),
-	}
-
-	return fileHeader, nil
-}
-
 func GetFilteredPosts(categories []string, title string) ([]models.Post, error) {
 	var posts []models.Post
 
@@ -468,7 +457,7 @@ func GetFilteredPosts(categories []string, title string) ([]models.Post, error) 
 
 func GetPostByThreadID(threadID int) ([]models.Post, error) {
 	posts := []models.Post{}
-	rows, err := User_db.Query("SELECT PostID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
+	rows, err := User_db.Query("SELECT PostID, UserID, Image, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
 	if err != nil {
 		log.Println("Error querying data:", err)
 		return nil, err
@@ -480,7 +469,8 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 		var content string
 		var createdAt time.Time
 		var likes, dislikes int
-		err := rows.Scan(&postID, &userID, &content, &createdAt, &likes, &dislikes)
+		var image []byte
+		err := rows.Scan(&postID, &userID, &image, &content, &createdAt, &likes, &dislikes)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -490,7 +480,12 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		url := "http://localhost:8080/images/" + strconv.Itoa(postID)
+		var url string
+		if image != nil {
+			url = "http://localhost:8080/images/" + strconv.Itoa(postID)
+		} else {
+			url = ""
+		}
 		post := models.Post{
 			PostID:         postID,
 			ThreadID:       threadID,
@@ -577,14 +572,6 @@ func SortByLikeDesc(posts []models.Post) []models.Post {
 	return posts
 }
 
-type postById struct {
-	PostID    int
-	ThreadID  int
-	UserID    int
-	Content   string
-	CreatedAt string
-}
-
 func InsertComment(userID, postID int, content string) error {
 	statement, err := User_db.Prepare("INSERT INTO Comments (UserID, PostID, Content, Likes, Dislikes) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
@@ -631,21 +618,19 @@ func GetPostByID(postID int) ([]models.Post, error) {
 
 	return posts, nil
 }
-func InsertPost(threadID, userID int, content string, image []byte) error {
-	statement, err := User_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Image, Likes, Dislikes) VALUES (?, ?, ?, ?, ?, ?)")
+func InsertPost(threadID, userID int, content string, image []byte, ext string) error {
+	statement, err := User_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Image, Ext, Likes, Dislikes) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(threadID, userID, content, image, 0, 0)
+	_, err = statement.Exec(threadID, userID, content, image, ext, 0, 0)
 	if err != nil {
 		log.Println("Error executing statement,", err)
 		return err
 	}
-
-	fmt.Println("Data inserted successfully.")
 	return nil
 }
 
@@ -688,12 +673,13 @@ func InsertThread(userID int, title string, categories []string) (int, error) {
 	return id, nil
 }
 
-func GetImage(postID int) ([]byte, error) {
-	row := User_db.QueryRow("SELECT Image FROM Posts WHERE PostID = ?", postID)
+func GetImage(postID int) ([]byte, string, error) {
+	row := User_db.QueryRow("SELECT Image ,Ext FROM Posts WHERE PostID = ?", postID)
 	var image []byte
-	err := row.Scan(&image)
+	var ext string
+	err := row.Scan(&image, &ext)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return image, nil
+	return image, ext, nil
 }

@@ -310,9 +310,7 @@ function getAllPosts() {
               ${post.Username}
             </a>
           </p>
-          <p>
-          <img src="${post.Image}" alt="Post Image" style="width: 40%; height: 50%;">
-          </p>
+          ${post.Image ? `<p><img src="${post.Image}" alt="Post Image" style="width: 40%; height: 50%;"></p>` : ''}
           <p>
             <div class="post-categories">${post.Categories}</div>
             ${post.Content}
@@ -413,8 +411,6 @@ function loginWithFacebook() {
   window.location.href = "/auth/facebook";
 }
 
-// image- upload
-
 document.getElementById("image").addEventListener("change", function (event) {
   var file = event.target.files[0];
   if (file) {
@@ -423,20 +419,17 @@ document.getElementById("image").addEventListener("change", function (event) {
       var img = document.getElementById("preview");
       img.src = e.target.result;
       img.style.display = "block";
-      document.getElementById("cancel").style.display = "inline"; // İptal butonunu göster
+      document.getElementById("cancel").style.display = "inline";
     }
     reader.readAsDataURL(file);
   }
 });
 
 document.getElementById("cancel").addEventListener("click", function () {
-  // Dosya input'unu temizle
   document.getElementById("image").value = "";
-  // Önizleme görüntüsünü gizle
   var img = document.getElementById("preview");
   img.src = "";
   img.style.display = "none";
-  // İptal butonunu gizle
   this.style.display = "none";
 });
 

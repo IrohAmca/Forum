@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -31,22 +32,26 @@ func CreatePost(c *gin.Context) {
 	post.Title = c.PostForm("title")
 	post.Content = c.PostForm("content")
 	post.Categories = c.PostFormArray("categories")
-
+	var blob []byte
+	var err error
+	var ext string
 	if post.Title == "" || post.Content == "" || len(post.Categories) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill all the fields"})
 		return
 	}
-	file, err := c.FormFile("image")
-	blob, err := file2Blob(file)
+	file, _ := c.FormFile("image")
+	if file != nil {
+		if file.Size > 1024*1024*20 {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Image size should be less than 20MB"})
+			return
+		}
+		ext = filepath.Ext(file.Filename)
+		blob, err = file2Blob(file)
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
-		return
-	}
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
-		return
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
+			return
+		}
 	}
 	cookie, err := c.Cookie("cookie")
 	if err != nil {
@@ -68,7 +73,7 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	db_manager.InsertPost(threadID, userID, post.Content, blob)
+	db_manager.InsertPost(threadID, userID, post.Content, blob, ext)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
 }
 
@@ -282,10 +287,26 @@ func GetImage(c *gin.Context) {
 		return
 	}
 
-	image, err := db_manager.GetImage(postID)
+	image, ext, err := db_manager.GetImage(postID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.Data(http.StatusOK, "image/png", image)
+
+	var contentType string
+	switch ext {
+	case ".png":
+		contentType = "image/png"
+	case ".jpeg", ".jpg":
+		contentType = "image/jpeg"
+	case ".svg":
+		contentType = "image/svg+xml"
+	case ".gif" ,"webp":
+		contentType = "image/gif"
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Unsupported image format"})
+		return
+	}
+
+	c.Data(http.StatusOK, contentType, image)
 }
