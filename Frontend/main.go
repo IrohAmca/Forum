@@ -1,17 +1,14 @@
 package main
 
 import (
-	"forum/db_manager"
-	"forum/services"
-
+	"frontend/setup"
+	"frontend/services"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db_manager.CreateDatabase()
-	// db_manager.CloseDatabase() <-- Can be add
-	// writeAllData()
 	r := gin.Default()
+	setup.Setup()
 
 	// Default route
 	r.Static("/static", "./static")
@@ -44,7 +41,7 @@ func main() {
 	r.POST("/create-post", services.CreatePost)
 	r.POST("/delete-post", services.DeletePost)
 	r.POST("/create-comment", services.CreateComment)
-	r.GET("/images/:filename", services.GetImage)
+
 	// Thread routes
 	r.Run(":8080")
 }

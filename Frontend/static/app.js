@@ -180,11 +180,10 @@ function ld_submit(PostID, isLike) {
       if (data.success) {
         getAllPosts();
       } else {
-        alert("Please log in to the website first!!!");
+        alert(data.message);
       }
     })
     .catch(error => console.error('Error:', error));
-  //location.reload();
 }
 
 
@@ -255,16 +254,17 @@ window.submitComment = function (button) {
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
   });
-
+  cookie = getCookie('cookie');
   fetch('/create-comment', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ postId: postId, comment: commentText, categories: selectedCategories })
+    body: JSON.stringify({ postId: postId, content: commentText, cookie: cookie })
   })
     .then(response => response.json())
     .then(data => {
+      console.log(data)
       if (data.success) {
       } else {
         alert("You cannot leave empty comments!!!");
@@ -298,7 +298,6 @@ function getAllPosts() {
         postList.innerHTML = '';
         var posts = data.posts;
         posts.forEach(post => {
-          console.log(post.Image)
           var newPost = document.createElement('article');
           newPost.classList.add('post');
           newPost.innerHTML = `<h2 class="blog-post-title">
@@ -340,6 +339,7 @@ function getAllPosts() {
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
           var comments = post.Comment;
+          console.log(comments);
           comments.forEach(comment => {
             var newComment = document.createElement('div');
             newComment.classList.add('comment');
@@ -431,33 +431,4 @@ document.getElementById("cancel").addEventListener("click", function () {
   img.src = "";
   img.style.display = "none";
   this.style.display = "none";
-});
-
-document.getElementById("uploadForm").addEventListener("submit", function (event) {
-  event.preventDefault();
-
-  var formData = new FormData(this);
-  var file = document.getElementById("image").files[0];
-
-  if (file.size > 20 * 1024 * 1024) {
-    document.getElementById("message").innerText = "File size exceeds 20 MB";
-    return;
-  }
-
-  fetch("/upload", {
-    method: "POST",
-    body: formData
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        document.getElementById("message").innerText = data.error;
-      } else {
-        document.getElementById("message").innerText = data.message;
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      document.getElementById("message").innerText = "An error occurred";
-    });
 });

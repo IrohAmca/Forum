@@ -1,14 +1,18 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"forum/db_manager"
+	"frontend/manager"
+	"frontend/models"
+	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/github"
@@ -29,6 +33,129 @@ var (
 	oauthStateString = "random"
 )
 
+func checkEmail(email string) (models.User, error) {
+	var loginInput struct {
+		Email        string `json:"email"`
+		Device_Token string `json:"device_token"`
+	}
+	env, err := godotenv.Read("config/.env")
+	if err != nil {
+		return models.User{}, err
+	}
+	loginInput.Device_Token = env["DEVICE_TOKEN"]
+	loginInput.Email = email
+	loginData, err := json.Marshal(loginInput)
+	if err != nil {
+		return models.User{}, err
+	}
+	api := manager.API{}
+	url := api.GetURL("CheckEmail")
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(loginData))
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return models.User{}, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return models.User{}, err
+	}
+	var response struct {
+		Success bool        `json:"success"`
+		Message string      `json:"message"`
+		User    models.User `json:"user"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		fmt.Println("Marshal error: ", err)
+		return models.User{}, err
+	}
+	success := response.Success
+	if !success {
+		fmt.Println("Response message: ", response.Message)
+		return models.User{}, fmt.Errorf(response.Message)
+	}
+	return response.User, nil
+}
+func authSignUp(email, name string) error {
+	var loginInput struct {
+		Email        string `json:"email"`
+		Username     string `json:"username"`
+		Device_Token string `json:"device_token"`
+	}
+	loginInput.Email = email
+	loginInput.Username = name
+	env, err := godotenv.Read("config/.env")
+	if err != nil {
+		return err
+	}
+	loginInput.Device_Token = env["DEVICE_TOKEN"]
+	loginData, err := json.Marshal(loginInput)
+	if err != nil {
+		return err
+	}
+	api := manager.API{}
+	url := api.GetURL("AuthSignup")
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(loginData))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	var response struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return err
+	}
+	if !response.Success {
+		return fmt.Errorf(response.Message)
+	}
+	return nil
+}
+func authLogin(email string) (string, error) {
+	var loginInput struct {
+		Email        string `json:"email"`
+		Device_Token string `json:"device_token"`
+	}
+	loginInput.Email = email
+	env, err := godotenv.Read("config/.env")
+	if err != nil {
+		return "", err
+	}
+	loginInput.Device_Token = env["DEVICE_TOKEN"]
+	loginData, err := json.Marshal(loginInput)
+	if err != nil {
+		return "", err
+	}
+	api := manager.API{}
+	url := api.GetURL("AuthLogin")
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(loginData))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	var response struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+		Cookie  string `json:"cookie"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", err
+	}
+	if !response.Success {
+		return "", fmt.Errorf(response.Message)
+	}
+	return response.Cookie, nil
+}
 func GoogleLogin(c *gin.Context) {
 	load_env()
 	var ClientID = os.Getenv("GOOGLE_CLIENT_ID")
@@ -46,17 +173,17 @@ func GoogleCallback(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
-
 	code := c.Request.FormValue("code")
 	token, err := oauthConf.Exchange(context.Background(), code)
 	if err != nil {
-		fmt.Printf("oauthConf.Exchange() failed with '%s'\n", err)
+		fmt.Printf("\n oauthConf.Exchange() failed with '%s'\n", err)
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 
 	resp, err := http.Get(fmt.Sprintf("https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s", token.AccessToken))
 	if err != nil {
+		fmt.Println("Failed to get user info")
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
@@ -71,47 +198,41 @@ func GoogleCallback(c *gin.Context) {
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&googleUser); err != nil {
+		fmt.Println("Failed to decode JSON response")
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
-
-	// Mevcut kullanıcıyı email ile kontrol et
-	existingUser, err := db_manager.GetUserByEmail(googleUser.Email)
+	existingUser, err := checkEmail(googleUser.Email)
 	if err != nil {
 		if err.Error() == fmt.Sprintf("no user with email %s", googleUser.Email) {
-			// Yeni kullanıcı ekle
-			user_token := GenerateToken(googleUser.Name)
-			err := db_manager.InsertUser(googleUser.Name, googleUser.Email, "", user_token)
+			err := authSignUp(googleUser.Email, googleUser.Name)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
-
-			cookie := GenerateCookie(user_token)
-			err = db_manager.InsertSession(user_token, cookie)
+			cookie, err := authLogin(googleUser.Email)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
 			c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-			c.Header("Authorization", user_token)
+			c.Header("Authorization", existingUser.Token.String)
 			c.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		} else {
 			c.Redirect(http.StatusTemporaryRedirect, "/")
+			fmt.Println("Error: ", err)
 			return
 		}
 	}
 
-	// Kullanıcı zaten mevcutsa, kullanıcı bilgileriyle giriş yap
-	cookie := GenerateCookie(existingUser.Token)
-	err = db_manager.InsertSession(existingUser.Token, cookie)
+	new_cookie, err := authLogin(googleUser.Email)
 	if err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		fmt.Println("Error: ", err)
 		return
 	}
-	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-	c.Header("Authorization", existingUser.Token)
+	c.SetCookie("cookie", new_cookie, 3600, "/", "localhost", false, false)
+	c.Header("Authorization", existingUser.Token.String)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
@@ -214,43 +335,37 @@ func GithubCallback(c *gin.Context) {
 		return
 	}
 
-	// Mevcut kullanıcıyı email ile kontrol et
-	existingUser, err := db_manager.GetUserByEmail(githubUser.Email)
+	existingUser, err := checkEmail(githubUser.Email)
 	if err != nil {
 		if err.Error() == fmt.Sprintf("no user with email %s", githubUser.Email) {
-			// Yeni kullanıcı ekle
-			user_token := GenerateToken(githubUser.Login)
-			err := db_manager.InsertUser(githubUser.Login, githubUser.Email, "", user_token)
+			err := authSignUp(githubUser.Email, githubUser.Login)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
-
-			cookie := GenerateCookie(user_token)
-			err = db_manager.InsertSession(user_token, cookie)
+			cookie, err := authLogin(githubUser.Email)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
 			c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-			c.Header("Authorization", user_token)
+			c.Header("Authorization", existingUser.Token.String)
 			c.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		} else {
 			c.Redirect(http.StatusTemporaryRedirect, "/")
+			fmt.Println("Error: ", err)
 			return
 		}
 	}
 
-	// Kullanıcı zaten mevcutsa, kullanıcı bilgileriyle giriş yap
-	cookie := GenerateCookie(existingUser.Token)
-	err = db_manager.InsertSession(existingUser.Token, cookie)
+	new_cookie, err := authLogin(githubUser.Email)
 	if err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		fmt.Println("Error: ", err)
 		return
 	}
-	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-	c.Header("Authorization", existingUser.Token)
+	c.SetCookie("cookie", new_cookie, 3600, "/", "localhost", false, false)
+	c.Header("Authorization", existingUser.Token.String)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
@@ -311,42 +426,36 @@ func FacebookCallback(c *gin.Context) {
 		return
 	}
 
-	// Mevcut kullanıcıyı email ile kontrol et
-	existingUser, err := db_manager.GetUserByEmail(fbUser.Email)
+	existingUser, err := checkEmail(fbUser.Email)
 	if err != nil {
 		if err.Error() == fmt.Sprintf("no user with email %s", fbUser.Email) {
-			// Yeni kullanıcı ekle
-			user_token := GenerateToken(fbUser.Name)
-			err := db_manager.InsertUser(fbUser.Name, fbUser.Email, "", user_token)
+			err := authSignUp(fbUser.Email, fbUser.Name)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
-
-			cookie := GenerateCookie(user_token)
-			err = db_manager.InsertSession(user_token, cookie)
+			cookie, err := authLogin(fbUser.Email)
 			if err != nil {
-				c.Redirect(http.StatusTemporaryRedirect, "/")
+				fmt.Println("Error: ", err)
 				return
 			}
 			c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-			c.Header("Authorization", user_token)
+			c.Header("Authorization", existingUser.Token.String)
 			c.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		} else {
 			c.Redirect(http.StatusTemporaryRedirect, "/")
+			fmt.Println("Error: ", err)
 			return
 		}
 	}
 
-	// Kullanıcı zaten mevcutsa, kullanıcı bilgileriyle giriş yap
-	cookie := GenerateCookie(existingUser.Token)
-	err = db_manager.InsertSession(existingUser.Token, cookie)
+	new_cookie, err := authLogin(fbUser.Email)
 	if err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		fmt.Println("Error: ", err)
 		return
 	}
-	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-	c.Header("Authorization", existingUser.Token)
+	c.SetCookie("cookie", new_cookie, 3600, "/", "localhost", false, false)
+	c.Header("Authorization", existingUser.Token.String)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

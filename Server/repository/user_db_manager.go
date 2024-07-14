@@ -1,8 +1,9 @@
-package db_manager
+package repository
 
 import (
 	"database/sql"
 	"fmt"
+	"forum/models"
 	"log"
 	"strings"
 
@@ -102,14 +103,12 @@ func SetMod(id int) error {
 	if err != nil {
 		return err
 	}
+	defer statement.Close()
 
 	_, err = statement.Exec(id)
 	if err != nil {
-		statement.Close()
 		return err
 	}
-
-	statement.Close()
 	return nil
 }
 
@@ -118,17 +117,14 @@ func SetAdmin(id int) error {
 	if err != nil {
 		return err
 	}
+	defer statement.Close()
 
 	_, err = statement.Exec(id)
 	if err != nil {
-		statement.Close()
 		return err
 	}
-
-	statement.Close()
 	return nil
 }
-
 func ID2Category(ids string) ([]string, error) {
 	var categories []string
 	dict := map[string]string{
@@ -169,6 +165,45 @@ func Category2ID(categories []string) ([]string, error) {
 		ids = append(ids, id)
 	}
 	return ids, nil
+}
+
+func InsertThread(userID int, title string, categories []string) (int, error) {
+	ids, err := Category2ID(categories)
+	if err != nil {
+		return 0, err
+	}
+	categoryIDs := ""
+	for _, id := range ids {
+		categoryIDs += id + ","
+	}
+	categoryIDs = categoryIDs[:len(categoryIDs)-1]
+	statement, err := User_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return 0, err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(userID, title, categoryIDs)
+	if err != nil {
+		log.Println("Error executing statement:", err)
+		return 0, err
+	}
+	statement, err = User_db.Prepare("SELECT ThreadID FROM Threads WHERE Title = ?")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return 0, err
+	}
+	defer statement.Close()
+
+	var id int
+	row := statement.QueryRow(title)
+	err = row.Scan(&id)
+	if err != nil {
+		log.Println("Error scanning row:", err)
+		return 0, err
+	}
+	return id, nil
 }
 func GetUserName(token string) (string, error) {
 	var username string
@@ -267,21 +302,22 @@ func InsertSession(token, cookie string) error {
 	return nil
 }
 
-func DeleteSession(token string) error {
-	statement, err := User_db.Prepare("DELETE FROM Session WHERE Token = ?")
+func DeleteSession(cookie string) error {
+	statement, err := User_db.Prepare("DELETE FROM Session WHERE Cookie = ?")
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(token)
+	_, err = statement.Exec(cookie)
 	if err != nil {
 		log.Println("Error executing statement:", err)
 		return err
 	}
 	return nil
 }
+
 func GetTokenByCookie(cookie string) (string, error) {
 	var token string
 	row := User_db.QueryRow("SELECT Token FROM Session WHERE Cookie = ?", cookie)
@@ -315,8 +351,48 @@ type User struct {
 	Token    string
 }
 
-// GetUserByEmail function fetches the user details based on the email address.
-func GetUserByEmail(email string) (*User, error) {
+func GetUserByEmail(email string) (models.User, error) {
+	var user models.User
+	row := User_db.QueryRow("SELECT Nickname, Email, Token FROM Users WHERE Email = ?", email)
+	err := row.Scan(&user.Nickname, &user.Email, &user.Token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.User{}, fmt.Errorf("no user with email %s", email)
+		}
+		return models.User{}, fmt.Errorf("error scanning row: %v", err)
+	}
+	return user, nil
+}
+
+func CheckDeviceToken(token string) bool {
+	var device string
+	row := User_db.QueryRow("SELECT DeviceTYPE FROM AUTH WHERE Token = ?", token)
+	err := row.Scan(&device)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+	}
+	return true
+}
+
+func InsertDevice(device, token string) error {
+	statement, err := User_db.Prepare("INSERT INTO AUTH (DeviceTYPE, Token) VALUES (?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(device, token)
+	if err != nil {
+		log.Println("Error executing statement", err)
+		return err
+	}
+	return nil
+}
+
+func CheckEmail(email string) (*User, error) {
 	var user User
 	row := User_db.QueryRow("SELECT UserID, Nickname, Email, Password, Token FROM Users WHERE Email = ?", email)
 	err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.Password, &user.Token)
@@ -327,4 +403,21 @@ func GetUserByEmail(email string) (*User, error) {
 		return nil, fmt.Errorf("error scanning row: %v", err)
 	}
 	return &user, nil
+}
+
+func InsertAuthUser(username, email, token string) error {
+	statement, err := User_db.Prepare("INSERT INTO Users (UserLevel, Nickname, Token, Email) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		log.Println("Error preparing statement:", err)
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(0, username, token, email)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("User added successfully.")
+	return nil
 }

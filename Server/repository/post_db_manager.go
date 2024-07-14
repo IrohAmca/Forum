@@ -1,4 +1,4 @@
-package db_manager
+package repository
 
 import (
 	"database/sql"
@@ -100,7 +100,7 @@ func GetAllPosts() ([]models.Post, error) {
 
 		post.Image = ""
 		if image != nil {
-			post.Image = "http://localhost:8080/images/" + strconv.Itoa(post.PostID)
+			post.Image = "http://localhost:8081/images/" + strconv.Itoa(post.PostID)
 		}
 
 		userToken, username, err := QueryTokenID(post.UserID)
@@ -457,7 +457,7 @@ func GetFilteredPosts(categories []string, title string) ([]models.Post, error) 
 
 func GetPostByThreadID(threadID int) ([]models.Post, error) {
 	posts := []models.Post{}
-	rows, err := User_db.Query("SELECT PostID, UserID, Image, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
+	rows, err := User_db.Query("SELECT PostID, UserID, Content, CreatedAt, Likes, Dislikes FROM Posts WHERE ThreadID = ?", threadID)
 	if err != nil {
 		log.Println("Error querying data:", err)
 		return nil, err
@@ -469,8 +469,7 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 		var content string
 		var createdAt time.Time
 		var likes, dislikes int
-		var image []byte
-		err := rows.Scan(&postID, &userID, &image, &content, &createdAt, &likes, &dislikes)
+		err := rows.Scan(&postID, &userID, &content, &createdAt, &likes, &dislikes)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -480,17 +479,10 @@ func GetPostByThreadID(threadID int) ([]models.Post, error) {
 			log.Println("Error scanning row:", err)
 			return nil, err
 		}
-		var url string
-		if image != nil {
-			url = "http://localhost:8080/images/" + strconv.Itoa(postID)
-		} else {
-			url = ""
-		}
 		post := models.Post{
 			PostID:         postID,
 			ThreadID:       threadID,
 			Content:        content,
-			Image:          url,
 			UserToken:      userToken,
 			Username:       username,
 			LikeCounter:    likes,
@@ -618,6 +610,19 @@ func GetPostByID(postID int) ([]models.Post, error) {
 
 	return posts, nil
 }
+
+func GetImage(postID int) ([]byte, string, error) {
+	row := User_db.QueryRow("SELECT Image ,Ext FROM Posts WHERE PostID = ?", postID)
+	var image []byte
+	var ext string
+	err := row.Scan(&image, &ext)
+	if err != nil {
+		return nil, "", err
+	}
+	return image, ext, nil
+}
+
+
 func InsertPost(threadID, userID int, content string, image []byte, ext string) error {
 	statement, err := User_db.Prepare("INSERT INTO Posts (ThreadID, UserID, Content, Image, Ext, Likes, Dislikes) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
@@ -632,54 +637,4 @@ func InsertPost(threadID, userID int, content string, image []byte, ext string) 
 		return err
 	}
 	return nil
-}
-
-func InsertThread(userID int, title string, categories []string) (int, error) {
-	ids, err := Category2ID(categories)
-	if err != nil {
-		return 0, err
-	}
-	categoryIDs := ""
-	for _, id := range ids {
-		categoryIDs += id + ","
-	}
-	categoryIDs = categoryIDs[:len(categoryIDs)-1]
-	statement, err := User_db.Prepare("INSERT INTO Threads (UserID, Title, CategoryIDs) VALUES (?, ?, ?)")
-	if err != nil {
-		log.Println("Error preparing statement:", err)
-		return 0, err
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(userID, title, categoryIDs)
-	if err != nil {
-		log.Println("Error executing statement:", err)
-		return 0, err
-	}
-	statement, err = User_db.Prepare("SELECT ThreadID FROM Threads WHERE Title = ?")
-	if err != nil {
-		log.Println("Error preparing statement:", err)
-		return 0, err
-	}
-	defer statement.Close()
-
-	var id int
-	row := statement.QueryRow(title)
-	err = row.Scan(&id)
-	if err != nil {
-		log.Println("Error scanning row:", err)
-		return 0, err
-	}
-	return id, nil
-}
-
-func GetImage(postID int) ([]byte, string, error) {
-	row := User_db.QueryRow("SELECT Image ,Ext FROM Posts WHERE PostID = ?", postID)
-	var image []byte
-	var ext string
-	err := row.Scan(&image, &ext)
-	if err != nil {
-		return nil, "", err
-	}
-	return image, ext, nil
 }

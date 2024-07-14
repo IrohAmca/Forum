@@ -1,79 +1,57 @@
-package services
+package service
 
 import (
 	"fmt"
-	"forum/db_manager"
 	"forum/models"
-	"io/ioutil"
-	"mime/multipart"
+	"forum/repository"
 	"net/http"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-func file2Blob(file *multipart.FileHeader) ([]byte, error) {
-	src, err := file.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer src.Close()
-
-	return ioutil.ReadAll(src)
-}
-
 func CreatePost(c *gin.Context) {
 	var post struct {
-		Title      string
-		Content    string
-		Categories []string
+		Title        string   `json:"title" binding:"required"`
+		Content      string   `json:"content" binding:"required"`
+		Categories   []string `json:"categories" binding:"required"`
+		Image        []byte   `json:"image"`
+		Ext          string   `json:"ext"`
+		Device_Token string   `json:"device_token" binding:"required"`
+		Cookie       string   `json:"cookie" binding:"required"`
 	}
-	post.Title = c.PostForm("title")
-	post.Content = c.PostForm("content")
-	post.Categories = c.PostFormArray("categories")
-	var blob []byte
-	var err error
-	var ext string
-	if post.Title == "" || post.Content == "" || len(post.Categories) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill all the fields"})
+	if err := c.ShouldBind(&post); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please fill in all the fields"})
 		return
 	}
-	file, _ := c.FormFile("image")
-	if file != nil {
-		if file.Size > 1024*1024*20 {
-			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Image size should be less than 20MB"})
-			return
-		}
-		ext = filepath.Ext(file.Filename)
-		blob, err = file2Blob(file)
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please upload an image"})
-			return
-		}
+	if repository.CheckDeviceToken(post.Device_Token[:len(post.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
 	}
-	cookie, err := c.Cookie("cookie")
+	if len(post.Categories) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Please select at least one category"})
+		return
+	}
+	if post.Cookie == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
+		return
+	}
+	token, err := repository.GetTokenByCookie(post.Cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
 		return
 	}
-	token, err := db_manager.GetTokenByCookie(cookie)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Please log in to the website first!!!"})
-		return
-	}
-	userID, err := db_manager.Query_ID(token)
+	userID, err := repository.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	threadID, err := db_manager.InsertThread(userID, post.Title, post.Categories)
+	threadID, err := repository.InsertThread(userID, post.Title, post.Categories)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	db_manager.InsertPost(threadID, userID, post.Content, blob, ext)
+	repository.InsertPost(threadID, userID, post.Content, post.Image, post.Ext)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Post created successfully"})
 }
 
@@ -81,32 +59,41 @@ func ShortPost(short_type string, posts []models.Post) []models.Post {
 	if short_type != "" {
 		if short_type == "date-asc" {
 			fmt.Println("date-asc")
-			posts = db_manager.SortByDateAsc(posts)
+			posts = repository.SortByDateAsc(posts)
 		} else if short_type == "date-desc" {
 			fmt.Println("date-desc")
-			posts = db_manager.SortByDateDesc(posts)
+			posts = repository.SortByDateDesc(posts)
 		} else if short_type == "likes-asc" {
 			fmt.Println("likes-asc")
-			posts = db_manager.SortByLikeAsc(posts)
+			posts = repository.SortByLikeAsc(posts)
 		} else if short_type == "likes-desc" {
 			fmt.Println("likes-desc")
-			posts = db_manager.SortByLikeDesc(posts)
+			posts = repository.SortByLikeDesc(posts)
 		}
 	}
 	return posts
 }
 func GetPosts(c *gin.Context) {
 	var categories struct {
-		Categories []string `json:"categories"`
-		Title      string   `json:"title"`
-		Short_type string   `json:"short_type"`
+		Categories   []string `json:"categories"`
+		Title        string   `json:"title"`
+		Short_type   string   `json:"short_type"`
+		Device_Token string   `json:"device_token"`
 	}
 	if err := c.ShouldBind(&categories); err != nil {
+		print("Error: ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	post, err := db_manager.GetFilteredPosts(categories.Categories, categories.Title)
+
+	if repository.CheckDeviceToken(categories.Device_Token[:len(categories.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+
+	post, err := repository.GetFilteredPosts(categories.Categories, categories.Title)
 	if err != nil {
+		print("Error: ", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -116,18 +103,24 @@ func GetPosts(c *gin.Context) {
 
 func DeletePost(c *gin.Context) {
 	var post struct {
-		PostID string `json:"PostID" binding:"required"`
+		PostID       string `json:"PostID" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
 	}
 	if err := c.ShouldBind(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
 		return
 	}
+	if repository.CheckDeviceToken(post.Device_Token[:len(post.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+
 	postID, err := strconv.Atoi(post.PostID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	err = db_manager.DeletePostFromDB(postID)
+	err = repository.DeletePostFromDB(postID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
@@ -137,8 +130,10 @@ func DeletePost(c *gin.Context) {
 }
 func CreateComment(c *gin.Context) {
 	var comment struct {
-		PostID  string `json:"postId" binding:"required"`
-		Content string `json:"comment" binding:"required"`
+		PostID       string `json:"postId"`
+		Content      string `json:"content"`
+		Cookie       string `json:"cookie"`
+		Device_Token string `json:"device_token"`
 	}
 	if err := c.ShouldBind(&comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
@@ -149,22 +144,17 @@ func CreateComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	cookie, err := c.Cookie("cookie")
+	token, err := repository.GetTokenByCookie(comment.Cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token, err := db_manager.GetTokenByCookie(cookie)
+	userID, err := repository.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	userID, err := db_manager.Query_ID(token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-	err = db_manager.InsertComment(userID, postID, comment.Content)
+	err = repository.InsertComment(userID, postID, comment.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -174,10 +164,15 @@ func CreateComment(c *gin.Context) {
 
 func DeleteComment(c *gin.Context) {
 	var comment struct {
-		CommentID string `json:"CommentID" binding:"required"`
+		CommentID    string `json:"CommentID" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
 	}
 	if err := c.ShouldBind(&comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error" + err.Error()})
+		return
+	}
+	if repository.CheckDeviceToken(comment.Device_Token[:len(comment.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
 		return
 	}
 	commentID, err := strconv.Atoi(comment.CommentID)
@@ -185,7 +180,7 @@ func DeleteComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid CommentID"})
 		return
 	}
-	err = db_manager.DeleteCommentFromDB(commentID)
+	err = repository.DeleteCommentFromDB(commentID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
@@ -196,39 +191,42 @@ func DeleteComment(c *gin.Context) {
 
 func LikeDislikePost(c *gin.Context) {
 	var like struct {
-		PostID string `json:"PostID" binding:"required"`
-		IsLike bool   `json:"isLike"`
+		PostID       string `json:"PostID"`
+		Cookie       string `json:"cookie"`
+		Device_Token string `json:"device_token"`
+		IsLike       bool   `json:"isLike"`
 	}
 	if err := c.ShouldBindJSON(&like); err != nil {
+		fmt.Println("Reading Error" + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
 		return
 	}
+	if repository.CheckDeviceToken(like.Device_Token[:len(like.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+
 	postID, err := strconv.Atoi(like.PostID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	cookie, err := c.Cookie("cookie")
+	token, err := repository.GetTokenByCookie(like.Cookie)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Cookie Error: " + err.Error()})
+		return
+	}
+	userID, err := repository.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token, err := db_manager.GetTokenByCookie(cookie)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-	userID, err := db_manager.Query_ID(token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-	action := db_manager.LikeDislikePostActions{
+	action := repository.LikeDislikePostActions{
 		UserID: userID,
 		PostID: postID,
 		IsLike: like.IsLike,
 	}
-	err = db_manager.HandleLikeDislike(action)
+	err = repository.HandleLikeDislike(action)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
@@ -239,11 +237,17 @@ func LikeDislikePost(c *gin.Context) {
 
 func LikeDislikeComment(c *gin.Context) {
 	var like struct {
-		CommentID string `json:"CommentID" binding:"required"`
-		IsLike    bool   `json:"isLike"`
+		CommentID    string `json:"CommentID" binding:"required"`
+		IsLike       bool   `json:"isLike"`
+		Cookie       string `json:"cookie"`
+		Device_Token string `json:"device_token"`
 	}
 	if err := c.ShouldBindJSON(&like); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Reading Error: " + err.Error()})
+		return
+	}
+	if repository.CheckDeviceToken(like.Device_Token[:len(like.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
 		return
 	}
 	commentID, err := strconv.Atoi(like.CommentID)
@@ -251,27 +255,22 @@ func LikeDislikeComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid PostID"})
 		return
 	}
-	cookie, err := c.Cookie("cookie")
+	token, err := repository.GetTokenByCookie(like.Cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token, err := db_manager.GetTokenByCookie(cookie)
+	userID, err := repository.Query_ID(token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	userID, err := db_manager.Query_ID(token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-	action := db_manager.LikeDislikeCommentActions{
+	action := repository.LikeDislikeCommentActions{
 		UserID:    userID,
 		CommentID: commentID,
 		IsLike:    like.IsLike,
 	}
-	err = db_manager.HandleLikeDislikeComment(action)
+	err = repository.HandleLikeDislikeComment(action)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -287,7 +286,7 @@ func GetImage(c *gin.Context) {
 		return
 	}
 
-	image, ext, err := db_manager.GetImage(postID)
+	image, ext, err := repository.GetImage(postID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -301,7 +300,7 @@ func GetImage(c *gin.Context) {
 		contentType = "image/jpeg"
 	case ".svg":
 		contentType = "image/svg+xml"
-	case ".gif" ,"webp":
+	case ".gif", "webp":
 		contentType = "image/gif"
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Unsupported image format"})
