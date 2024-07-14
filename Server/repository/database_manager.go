@@ -1,4 +1,4 @@
-package db_manager
+package repository
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ var User_db *sql.DB
 
 func CreateDatabase() {
 	var err error
-	User_db, err = sql.Open("sqlite3", "databases/database.db")
+	User_db, err = sql.Open("sqlite3", "repository/database.db")
 	if err != nil {
 		log.Fatal("Database connection error:", err)
 	}
@@ -95,7 +95,11 @@ func CreateDatabase() {
 				UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (UserID) REFERENCES Users(UserID),
 				FOREIGN KEY (PostID) REFERENCES Posts(PostID)
-			);`}
+			);`,
+		`CREATE TABLE IF NOT EXISTS AUTH (
+				DeviceTYPE TEXT NOT NULL,
+				Token TEXT NOT NULL
+				);`}
 
 	for _, query := range creationQueries {
 		_, err := User_db.Exec(query)
