@@ -44,13 +44,17 @@ func setDeviceToken(token string) error {
 	return nil
 }
 func DeviceRegister() bool {
+	register := models.Register{}
 	godotenv.Load("config/.env")
-	password := os.Getenv("DEVICE_PASSWORD")
-	device_type := os.Getenv("DEVICE_TYPE")
+	register.Password = os.Getenv("DEVICE_PASSWORD")
+	register.Device_Type = os.Getenv("DEVICE_TYPE")
 	api := manager.API{}
 	url := api.GetURL("DeviceRegister")
-
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(`{"password": "`+password+`", "device_type": "`+device_type+`"}`)))
+	register_marshalled, err := json.Marshal(register)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(register_marshalled))
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +66,7 @@ func DeviceRegister() bool {
 		panic(err)
 	}
 
-	response := models.Register{}
+	response := models.Register_CallBack{}
 	if err := json.Unmarshal(body, &response); err != nil {
 		panic(err)
 	}
