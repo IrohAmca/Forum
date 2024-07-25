@@ -1,5 +1,6 @@
 checkToken();
 var token;
+var userlevel;
 document.addEventListener('DOMContentLoaded', function () {
   getAllPosts();
 
@@ -21,8 +22,8 @@ function checkToken() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        console.log(data.username);
         token = data.token;
+        userlevel = data.userlevel;
         const initial = data.username.charAt(0).toUpperCase();
         const profileIconHTML = `
           <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
@@ -164,6 +165,9 @@ function getDeletePostButtonHtml(postToken, PostID) {
   if (token == postToken) {
     return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
   }
+  if (userlevel == 1 || userlevel == 2) {
+    return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
+  }
   return '';
 }
 
@@ -264,7 +268,7 @@ window.submitComment = function (button) {
   })
     .then(response => response.json())
     .then(data => {
-      console.log(data)
+      
       if (data.success) {
       } else {
         alert("You cannot leave empty comments!!!");
@@ -339,7 +343,6 @@ function getAllPosts() {
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
           var comments = post.Comment;
-          console.log(comments);
           comments.forEach(comment => {
             var newComment = document.createElement('div');
             newComment.classList.add('comment');

@@ -200,12 +200,13 @@ func UserChecker(c *gin.Context) {
 		Message  string `json:"message"`
 		Username string `json:"username"`
 		Token    string `json:"token"`
+		Userlevel string `json:"userlevel"`
 	}
 	if err := json.Unmarshal(body, &response); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.JSON(http.StatusUnauthorized, gin.H{"success": response.Success, "message": response.Message, "username": response.Username, "token": response.Token})
+	c.JSON(http.StatusUnauthorized, gin.H{"success": response.Success, "message": response.Message, "username": response.Username, "token": response.Token, "userlevel": response.Userlevel})
 }
 func SignOut(c *gin.Context) {
 	var user struct {

@@ -171,7 +171,13 @@ func UserChecker(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username, "token": token})
+		userlevel,err := repository.GetUserLevel(username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username, "token": token, "userlevel": userlevel})
 		return
 	}
 	if !repository.CheckToken(token) {

@@ -421,3 +421,16 @@ func InsertAuthUser(username, email, token string) error {
 	fmt.Println("User added successfully.")
 	return nil
 }
+
+func GetUserLevel(username string)(string,error){
+	var userlevel string
+	row := User_db.QueryRow("SELECT UserLevel FROM Users WHERE Nickname = ?", username)
+	err := row.Scan(&userlevel)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "",fmt.Errorf("no user with username %s", username)
+		}
+		return "",fmt.Errorf("error scanning row: %v", err)
+	}
+	return userlevel,nil
+}
