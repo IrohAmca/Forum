@@ -39,6 +39,7 @@ func main() {
 
 	// Manager routes
 	r.POST("/setModarator", service.SetModarator)
+	r.POST("/report", service.Report)
 	// Thread routes
 	r.Run(":8081")
 }

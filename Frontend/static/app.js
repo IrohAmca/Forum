@@ -259,6 +259,40 @@ function getDeleteCommentButtonHtml(commentToken, CommentID) {
   }
   return '';
 }
+function getReportButtonHtml(PostID) {
+  if (userlevel == "1" || userlevel == "2") {
+    return '<button class="delete-btn" onclick="Report()">< alt="Report Icon"></button>';
+  }
+  return '';
+}
+function Report() {
+  var reportForm = document.querySelector('.report-form');
+  var submitButton = reportForm.querySelector('.btn-primary');
+  reportForm.style.display = 'block';
+  submitButton.disabled = false;
+}
+
+window.submitReport = function (button) {
+  var replyForm = button.closest('.report-form');
+  var reportText = replyForm.querySelector('input').value;
+  var postId = replyForm.closest('.post').dataset.postId;
+  fetch('/report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ postID: postId, token: token, reportText: reportText })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+      } else {
+        alert("Error reporting post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
 window.submitComment = function (button) {
   var replyForm = button.closest('.reply-form');
@@ -342,6 +376,7 @@ function getAllPosts() {
               <span class="dislike-count">${post.DislikeCounter}</span>
             </button>
             <button class="reply-btn" onclick="writeComment(this)"><img src="../png/comment.png" alt="Comment Icon"></button>
+            `+ getReportButtonHtml(post.PostID) + `
             ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
 
     
@@ -350,7 +385,11 @@ function getAllPosts() {
           <div class="reply-form" style="display:none;">
             <input type="text" class="form-control" placeholder="Write a comment...">
             <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
-          </div>`;
+          </div>
+          <div class="report-form" style="display:none;">
+            <input type="text" class="form-control" placeholder="Write a report...">
+            <button class="btn btn-primary" onclick="submitReport(this)">Submit</button>`
+            ;
           newPost.dataset.postId = post.PostID;
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
@@ -367,6 +406,7 @@ function getAllPosts() {
               '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', true)"><img src="../png/like.png" alt="Like Icon"> <span class="like-count">' + comment.LikeCounter + '</span></button><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon"> <span class="dislike-count">' + comment.DislikeCounter + '</span></button>'
               + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
               '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+            +'</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a report..."><button class="btn btn-primary" onclick="submitReport(this)">Submit</button></div>';
 
             newPost.appendChild(newComment);
           });
