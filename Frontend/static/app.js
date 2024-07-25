@@ -39,6 +39,18 @@ function checkToken() {
         $('#signInButton').show();
         $('#signUpButton').show();
       }
+      if (userlevel == "1") {
+        $('#moderatorButton').show();
+        const moderatorButtonHTML = `
+          <a href="/moderator/${data.username}" class="moderator-button">Moderator Panel</a>`;
+        document.getElementById('moderatorIconContainer').innerHTML = moderatorButtonHTML;
+      }
+      if (userlevel == "2") {
+        $('#adminButton').show();
+        const adminButtonHTML = `
+          <a href="/admin" class="admin-button">Admin Panel</a>`;
+        document.getElementById('adminIconContainer').innerHTML = adminButtonHTML;
+      }
     })
     .catch(error => console.error('Error:', error));
 }
@@ -268,7 +280,7 @@ window.submitComment = function (button) {
   })
     .then(response => response.json())
     .then(data => {
-      
+
       if (data.success) {
       } else {
         alert("You cannot leave empty comments!!!");

@@ -27,7 +27,9 @@ func main() {
 	r.GET("/auth/github/callback", services.GithubCallback)
 	r.GET("/auth/facebook", services.FacebookLogin)
 	r.GET("/auth/facebook/callback", services.FacebookCallback)
-
+	r.GET("/admin", services.AdminPage)
+	r.GET("/moderator/:username", services.ModeratorPage)
+	r.POST("/setModarator", services.SetModarator)
 	r.POST("/sign-up", services.SignUp)
 	r.POST("/login", services.Login)
 	r.POST("/check-token", services.UserChecker)

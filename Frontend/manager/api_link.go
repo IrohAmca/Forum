@@ -44,7 +44,7 @@ var dictionary = map[string]string{
 	"CreateComment":      "/create-comment",	  // OK!!!
 	"DeviceRegister":     "/device-register",     // OK!!!
 	"CheckEmail":         "/check-email",         // OK!!!
-	
+	"SetModarator":       "/setModarator",        
 }
 
 func init() {

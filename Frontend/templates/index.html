@@ -203,6 +203,23 @@
       #cancel {
         display: none;
       }
+      .admin-button, .moderator-button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    .admin-button:hover, .moderator-button:hover {
+      background-color: #45a049;
+    }
     </style>
   </head>
 
@@ -216,7 +233,10 @@
           </div>
 
           <div id="content" class="col-6 d-flex justify-content-end">
+
             <div id="profileIconContainer"></div>
+            <div id="adminIconContainer"></div>
+            <div id="moderatorIconContainer"></div>
             <button id="signInButton" style="margin-right: 2rem;" class="btn btn-primary" data-toggle="modal" data-target="#signInModal">
               <img src="../png/user.png" alt="User Icon" style="width: 20px; height: 20px; margin-right: 5px;" />
               Sign In

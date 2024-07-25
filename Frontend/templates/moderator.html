@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: rgb(248, 239, 248);
+            color: #2c3e50;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .sidebar h2 {
+            text-align: center;
+        }
+        .sidebar a {
+            display: block;
+            color: #2c3e50;
+            padding: 10px 0;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background: #f5f5f5;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h3 {
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+        }
+        .post-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .list-item {
+            padding: 10px;
+            border: 1px solid #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        button {
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Moderator Panel</h2>
+        <a href="#user-posts">User Posts</a>
+        <a href="#reported-posts">Reported Posts</a>
+    </div>
+    <div class="main-content">
+        <div id="user-posts" class="section">
+            <h3>User Posts</h3>
+            <ul class="post-list">
+                <li class="list-item">
+                    <span>Post1 by User1</span>
+                    <div>
+                        <button onclick="deletePost('Post1')">Delete</button>
+                        <button onclick="reportPost('Post1')">Report</button>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <span>Post2 by User2</span>
+                    <div>
+                        <button onclick="deletePost('Post2')">Delete</button>
+                        <button onclick="reportPost('Post2')">Report</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div id="reported-posts" class="section">
+            <h3>Reported Posts</h3>
+            <ul class="post-list">
+                <li class="list-item">Reported Post1 by Moderator1</li>
+                <li class="list-item">Reported Post2 by Moderator2</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function deletePost(post) {
+            alert(post + ' deleted');
+            // Bu fonksiyonu backend ile entegrasyon yaparak tamamlayın
+        }
+
+        function reportPost(post) {
+            alert(post + ' reported');
+            // Bu fonksiyonu backend ile entegrasyon yaparak tamamlayın
+        }
+    </script>
+</body>
+</html>

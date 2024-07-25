@@ -13,6 +13,7 @@ func main() {
 	// db_manager.CloseDatabase() <-- Can be add
 	// writeAllData()
 	r := gin.Default()
+	repository.SetAdmin("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjEwNDUzNzMsInN1YiI6IkFsaSBBeWfDvG4ifQ.PECOF4yo6cxKSgm6DgBmk3e-ueBC1fn9aW7q0UoiSDk")
 	r.POST("/device-register", middleware.DeviceRegister)
 	
 	r.POST("/check-email", service.CheckEmail)
@@ -35,6 +36,9 @@ func main() {
 	r.POST("/create-comment", service.CreateComment)
 
 	r.GET("/images/:filename", service.GetImage)
+
+	// Manager routes
+	r.POST("/setModarator", service.SetModarator)
 	// Thread routes
 	r.Run(":8081")
 }

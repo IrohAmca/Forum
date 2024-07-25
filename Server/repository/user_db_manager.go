@@ -98,28 +98,28 @@ func Query_ID_By_Name(username string) (int, error) {
 	}
 	return id, nil
 }
-func SetMod(id int) error {
-	statement, err := User_db.Prepare("UPDATE Users SET UserLevel = 1 WHERE UserID = ?")
+func SetMod(username string) error {
+	statement, err := User_db.Prepare("UPDATE Users SET UserLevel = 1 WHERE Nickname = ?")
 	if err != nil {
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(id)
+	_, err = statement.Exec(username)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SetAdmin(id int) error {
-	statement, err := User_db.Prepare("UPDATE Users SET UserLevel = 2 WHERE UserID = ?")
+func SetAdmin(username string) error {
+	statement, err := User_db.Prepare("UPDATE Users SET UserLevel = 2 WHERE Nickname = ?")
 	if err != nil {
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(id)
+	_, err = statement.Exec(username)
 	if err != nil {
 		return err
 	}
@@ -422,15 +422,15 @@ func InsertAuthUser(username, email, token string) error {
 	return nil
 }
 
-func GetUserLevel(username string)(string,error){
+func GetUserLevel(username string) (string, error) {
 	var userlevel string
 	row := User_db.QueryRow("SELECT UserLevel FROM Users WHERE Nickname = ?", username)
 	err := row.Scan(&userlevel)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "",fmt.Errorf("no user with username %s", username)
+			return "", fmt.Errorf("no user with username %s", username)
 		}
-		return "",fmt.Errorf("error scanning row: %v", err)
+		return "", fmt.Errorf("error scanning row: %v", err)
 	}
-	return userlevel,nil
+	return userlevel, nil
 }
