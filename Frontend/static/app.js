@@ -18,29 +18,43 @@ function checkToken() {
     },
     body: JSON.stringify({ cookie: cookie })
   })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        console.log(data.username);
-        token = data.token;
-        const initial = data.username.charAt(0).toUpperCase();
-        const profileIconHTML = `
-          <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
-        document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
-        $('#profileIconContainer').show();
-        $('#signInButton').hide();
-        $('#signUpButton').hide();
-        $('#signOutButton').show();
-        $('#postForm').show();
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log(data.username);
+      token = data.token;
+      const initial = data.username.charAt(0).toUpperCase();
+      const profileIconHTML = `
+        <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
+      document.getElementById('profileIconContainer').innerHTML = profileIconHTML;
+      document.getElementById('profileIconContainer').style.display = 'block';
+      document.getElementById('signInButton').style.display = 'none';
+      document.getElementById('signUpButton').style.display = 'none';
+      document.getElementById('signOutButton').style.display = 'block';
+      document.getElementById('postForm').style.display = 'block';
+
+      // Kullanıcı rolüne göre butonları göster
+      if (data.role === 'admin') {
+        document.getElementById('adminButton').style.display = 'inline-block';
+        document.getElementById('moderatorButton').style.display = 'none';
+      } else if (data.role === 'moderator') {
+        document.getElementById('adminButton').style.display = 'none';
+        document.getElementById('moderatorButton').style.display = 'inline-block';
       } else {
-        $('#postForm').show();
-        $('#signOutButton').hide();
-        $('#signInButton').show();
-        $('#signUpButton').show();
+        document.getElementById('adminButton').style.display = 'none';
+        document.getElementById('moderatorButton').style.display = 'none';
       }
-    })
-    .catch(error => console.error('Error:', error));
+
+    } else {
+      document.getElementById('postForm').style.display = 'block';
+      document.getElementById('signOutButton').style.display = 'none';
+      document.getElementById('signInButton').style.display = 'block';
+      document.getElementById('signUpButton').style.display = 'block';
+    }
+  })
+  .catch(error => console.error('Error:', error));
 }
+
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
