@@ -321,7 +321,7 @@ window.submitComment = function (button) {
       }
     })
     .catch(error => console.error('Error:', error));
-  location.reload();
+  location.reload(); // --> .finally(() => {location.reload();});
 };
 
 function getAllPosts() {

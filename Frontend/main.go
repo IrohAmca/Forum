@@ -44,6 +44,7 @@ func main() {
 	// Manager routes
 	r.GET("/admin", services.AdminPage)
 	r.GET("/moderator/:username", services.ModeratorPage)
+	
 	r.POST("/setModarator", services.SetModarator)
 	r.POST("/report", services.Report)
 	// Thread routes
