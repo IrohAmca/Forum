@@ -1,17 +1,14 @@
 package main
 
 import (
-	"forum/db_manager"
-	"forum/services"
-
+	"frontend/setup"
+	"frontend/services"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db_manager.CreateDatabase()
-	// db_manager.CloseDatabase() <-- Can be add
-	// writeAllData()
 	r := gin.Default()
+	setup.Setup()
 
 	// Default route
 	r.Static("/static", "./static")
@@ -30,7 +27,6 @@ func main() {
 	r.GET("/auth/github/callback", services.GithubCallback)
 	r.GET("/auth/facebook", services.FacebookLogin)
 	r.GET("/auth/facebook/callback", services.FacebookCallback)
-
 	r.POST("/sign-up", services.SignUp)
 	r.POST("/login", services.Login)
 	r.POST("/check-token", services.UserChecker)
@@ -44,7 +40,13 @@ func main() {
 	r.POST("/create-post", services.CreatePost)
 	r.POST("/delete-post", services.DeletePost)
 	r.POST("/create-comment", services.CreateComment)
-	r.GET("/images/:filename", services.GetImage)
+
+	// Manager routes
+	r.GET("/admin", services.AdminPage)
+	r.GET("/moderator/:username", services.ModeratorPage)
+	
+	r.POST("/setModarator", services.SetModarator)
+	r.POST("/report", services.Report)
 	// Thread routes
 	r.Run(":8080")
 }

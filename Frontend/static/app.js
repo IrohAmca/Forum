@@ -1,5 +1,6 @@
 checkToken();
 var token;
+var userlevel;
 document.addEventListener('DOMContentLoaded', function () {
   getAllPosts();
 
@@ -21,8 +22,8 @@ function checkToken() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        console.log(data.username);
         token = data.token;
+        userlevel = data.userlevel;
         const initial = data.username.charAt(0).toUpperCase();
         const profileIconHTML = `
           <a href="/profile/${data.username}" class="profile-icon">${initial}</a>`;
@@ -37,6 +38,18 @@ function checkToken() {
         $('#signOutButton').hide();
         $('#signInButton').show();
         $('#signUpButton').show();
+      }
+      if (userlevel == "1") {
+        $('#moderatorButton').show();
+        const moderatorButtonHTML = `
+          <a href="/moderator/${data.username}" class="moderator-button">Moderator Panel</a>`;
+        document.getElementById('moderatorIconContainer').innerHTML = moderatorButtonHTML;
+      }
+      if (userlevel == "2") {
+        $('#adminButton').show();
+        const adminButtonHTML = `
+          <a href="/admin" class="admin-button">Admin Panel</a>`;
+        document.getElementById('adminIconContainer').innerHTML = adminButtonHTML;
       }
     })
     .catch(error => console.error('Error:', error));
@@ -164,6 +177,9 @@ function getDeletePostButtonHtml(postToken, PostID) {
   if (token == postToken) {
     return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
   }
+  if (userlevel == 1 || userlevel == 2) {
+    return '<button class="delete-btn" onclick="deletePost(\'' + PostID + '\')"><img src="../png/delete.png" alt="Delete Icon"></button>';
+  }
   return '';
 }
 
@@ -180,11 +196,10 @@ function ld_submit(PostID, isLike) {
       if (data.success) {
         getAllPosts();
       } else {
-        alert("Please log in to the website first!!!");
+        alert(data.message);
       }
     })
     .catch(error => console.error('Error:', error));
-  //location.reload();
 }
 
 
@@ -244,6 +259,40 @@ function getDeleteCommentButtonHtml(commentToken, CommentID) {
   }
   return '';
 }
+function getReportButtonHtml(PostID) {
+  if (userlevel == "1" || userlevel == "2") {
+    return '<button class="delete-btn" onclick="Report()">< alt="Report Icon"></button>';
+  }
+  return '';
+}
+function Report() {
+  var reportForm = document.querySelector('.report-form');
+  var submitButton = reportForm.querySelector('.btn-primary');
+  reportForm.style.display = 'block';
+  submitButton.disabled = false;
+}
+
+window.submitReport = function (button) {
+  var replyForm = button.closest('.report-form');
+  var reportText = replyForm.querySelector('input').value;
+  var postId = replyForm.closest('.post').dataset.postId;
+  fetch('/report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ postID: postId, token: token, reportText: reportText })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+      } else {
+        alert("Error reporting post: " + data.message);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
 window.submitComment = function (button) {
   var replyForm = button.closest('.reply-form');
@@ -255,23 +304,24 @@ window.submitComment = function (button) {
   checkboxes.forEach((checkbox) => {
     selectedCategories.push(checkbox.value);
   });
-
+  cookie = getCookie('cookie');
   fetch('/create-comment', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ postId: postId, comment: commentText, categories: selectedCategories })
+    body: JSON.stringify({ postId: postId, content: commentText, cookie: cookie })
   })
     .then(response => response.json())
     .then(data => {
+
       if (data.success) {
       } else {
         alert("You cannot leave empty comments!!!");
       }
     })
     .catch(error => console.error('Error:', error));
-  location.reload();
+  location.reload(); // --> .finally(() => {location.reload();});
 };
 
 function getAllPosts() {
@@ -298,7 +348,6 @@ function getAllPosts() {
         postList.innerHTML = '';
         var posts = data.posts;
         posts.forEach(post => {
-          console.log(post.Image)
           var newPost = document.createElement('article');
           newPost.classList.add('post');
           newPost.innerHTML = `<h2 class="blog-post-title">
@@ -327,6 +376,7 @@ function getAllPosts() {
               <span class="dislike-count">${post.DislikeCounter}</span>
             </button>
             <button class="reply-btn" onclick="writeComment(this)"><img src="../png/comment.png" alt="Comment Icon"></button>
+            `+ getReportButtonHtml(post.PostID) + `
             ${getDeletePostButtonHtml(post.UserToken, post.PostID)}
 
     
@@ -335,7 +385,11 @@ function getAllPosts() {
           <div class="reply-form" style="display:none;">
             <input type="text" class="form-control" placeholder="Write a comment...">
             <button class="btn btn-primary" onclick="submitComment(this)">Submit</button>
-          </div>`;
+          </div>
+          <div class="report-form" style="display:none;">
+            <input type="text" class="form-control" placeholder="Write a report...">
+            <button class="btn btn-primary" onclick="submitReport(this)">Submit</button>`
+            ;
           newPost.dataset.postId = post.PostID;
           var postList = document.querySelector('.post-list');
           postList.prepend(newPost);
@@ -352,6 +406,7 @@ function getAllPosts() {
               '</p><hr><div class="buttons"><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', true)"><img src="../png/like.png" alt="Like Icon"> <span class="like-count">' + comment.LikeCounter + '</span></button><button class="like-dislike-btn" onclick="ld_comment_submit(\'' + comment.CommentID + '\', false)"><img src="../png/dislike.png" alt="Dislike Icon"> <span class="dislike-count">' + comment.DislikeCounter + '</span></button>'
               + getDeleteCommentButtonHtml(post.UserToken, comment.CommentID) +
               '</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a comment..."><button class="btn btn-primary" onclick="submitComment(this)">Submit</button></div>';
+            +'</div><div class="reply-form" style="display:none;"><input type="text" class="form-control" placeholder="Write a report..."><button class="btn btn-primary" onclick="submitReport(this)">Submit</button></div>';
 
             newPost.appendChild(newComment);
           });
@@ -431,33 +486,4 @@ document.getElementById("cancel").addEventListener("click", function () {
   img.src = "";
   img.style.display = "none";
   this.style.display = "none";
-});
-
-document.getElementById("uploadForm").addEventListener("submit", function (event) {
-  event.preventDefault();
-
-  var formData = new FormData(this);
-  var file = document.getElementById("image").files[0];
-
-  if (file.size > 20 * 1024 * 1024) {
-    document.getElementById("message").innerText = "File size exceeds 20 MB";
-    return;
-  }
-
-  fetch("/upload", {
-    method: "POST",
-    body: formData
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        document.getElementById("message").innerText = data.error;
-      } else {
-        document.getElementById("message").innerText = data.message;
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      document.getElementById("message").innerText = "An error occurred";
-    });
 });

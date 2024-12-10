@@ -1,12 +1,10 @@
-package services
+package service
 
 import (
 	"errors"
 	"fmt"
-	"forum/db_manager"
 	"forum/models"
-	"html/template"
-	"log"
+	"forum/repository"
 	"net/http"
 	"os"
 	"time"
@@ -18,12 +16,16 @@ import (
 )
 
 func GenerateToken(username string) string {
-	load_env()
+	jwt_token, err := load_env("JWT_SECRET")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	tokenString, err := token.SignedString([]byte(jwt_token))
 	if err != nil {
 		panic("Failed to generate token")
 	}
@@ -43,23 +45,28 @@ func GenerateCookie(token string) string {
 }
 
 func CheckSession(token string, c *gin.Context) {
-	is_session := db_manager.CheckTokenFromSession(token)
+	is_session := repository.CheckTokenFromSession(token)
 	if is_session {
-		db_manager.DeleteSession(token)
+		repository.DeleteSession(token)
 		c.SetCookie("cookie", "", -1, "/", "localhost", false, false)
 		c.Redirect(302, "/")
 	}
 }
 func Login(c *gin.Context) {
 	var loginInput struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
+		Email        string `json:"email" binding:"required"`
+		Password     string `json:"password" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
 	}
 	if err := c.ShouldBind(&loginInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	passwordReal, err := db_manager.Query_email(loginInput.Email)
+	if repository.CheckDeviceToken(loginInput.Device_Token[:len(loginInput.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+	passwordReal, err := repository.Query_email(loginInput.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -70,8 +77,8 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
 		return
 	}
-	username, _ := db_manager.Query_username(loginInput.Email) // <-- This part can be optimize
-	token, err := db_manager.QueryToken(username)
+	username, _ := repository.Query_username(loginInput.Email) // <-- This part can be optimize
+	token, err := repository.QueryToken(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -79,29 +86,33 @@ func Login(c *gin.Context) {
 	cookie := GenerateCookie(token)
 
 	CheckSession(token, c)
-	err = db_manager.InsertSession(token, cookie)
+	err = repository.InsertSession(token, cookie)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.SetCookie("cookie", cookie, 3600, "/", "localhost", false, false)
-	c.Header("Authorization", token)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username, "token": token})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Welcome " + username, "token": token, "cookie": cookie})
 }
 
 func SignUp(c *gin.Context) {
 	var user struct {
-		Username string `json:"username" binding:"required"`
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
+		Username     string `json:"username" binding:"required"`
+		Email        string `json:"email" binding:"required"`
+		Password     string `json:"password" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
+
+	if repository.CheckDeviceToken(user.Device_Token[:len(user.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
 	token := GenerateToken(user.Username)
-	if err := db_manager.InsertUser(user.Username, user.Email, user.Password, token); err != nil {
+	if err := repository.InsertUser(user.Username, user.Email, user.Password, token); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -109,10 +120,26 @@ func SignUp(c *gin.Context) {
 }
 
 func SignOut(c *gin.Context) {
+	var user struct {
+		Cookie       string `json:"cookie" binding:"required"`
+		Device_Token string `json:"device_token"`
+	}
+	if err := c.ShouldBindJSON(&user); err != nil {
+		fmt.Println("Reading error: ", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	if repository.CheckDeviceToken(user.Device_Token[:len(user.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+	err := repository.DeleteSession(user.Cookie)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
 	c.SetCookie("cookie", "", -1, "/", "localhost", false, false)
-	c.JSON(200, gin.H{"success": true, "message": "You have been signed out"})
-	c.Redirect(302, "/")
-	db_manager.DeleteSession(c.GetHeader("Authorization"))
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User has been signed out successfully"})
 }
 
 func Authenticate(storedPassword, inputPassword string) error {
@@ -132,34 +159,51 @@ func UserChecker(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	token, err := db_manager.GetTokenByCookie(user.Cookie)
+	token, err := repository.GetTokenByCookie(user.Cookie)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
-	if db_manager.CheckToken(token) {
-		username, err := db_manager.GetUserName(token)
+	if repository.CheckToken(token) {
+		username, err := repository.GetUserName(token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username, "token": token})
+		userlevel,err := repository.GetUserLevel(username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Token is valid", "username": username, "token": token, "userlevel": userlevel})
 		return
 	}
-	if !db_manager.CheckToken(token) {
+	if !repository.CheckToken(token) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token is invalid"})
 		return
 	}
-	if db_manager.CheckTokenFromSession(token) {
+	if repository.CheckTokenFromSession(token) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": true, "message": "Token is invalid"})
 		return
-	}
+	} // !!!
 }
 func ProfilePage(c *gin.Context) {
-	username := c.Param("username")
-	w := c.Writer
-	userID, err := db_manager.Query_ID_By_Name(username)
+	var user_data struct {
+		Username     string `json:"username" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
+	}
+	if err := c.ShouldBind(&user_data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	if repository.CheckDeviceToken(user_data.Device_Token[:len(user_data.Device_Token)-8]) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token"})
+		return
+	}
+
+	userID, err := repository.Query_ID_By_Name(user_data.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
@@ -171,23 +215,17 @@ func ProfilePage(c *gin.Context) {
 		return
 	}
 
-	tpl, err := template.ParseFiles("templates/userprofile.html")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
 	data := models.UserData{
 		User:       user,
 		Posts:      posts,
 		LD_Posts:   ld_post,
 		LD_Comment: ld_comment,
 	}
-	fmt.Println(data.Posts)
-	tpl.Execute(w, &data)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User data retrieved successfully", "data": data})
 }
 
 func userInfo(userID int) (*models.User, *[]models.Post, *[]models.Post, *[]models.Post, error) {
-	rows, err := db_manager.User_db.Query("SELECT UserID, Token, UserLevel, Name, Lastname, Nickname, Email, UserBirthdate, Password FROM Users WHERE UserID = ?", userID)
+	rows, err := repository.User_db.Query("SELECT UserID, Token, UserLevel, Name, Lastname, Nickname, Email, UserBirthdate, Password FROM Users WHERE UserID = ?", userID)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -233,7 +271,7 @@ func userInfo(userID int) (*models.User, *[]models.Post, *[]models.Post, *[]mode
 
 func fetchPostsByUserID(userID int) ([]models.Post, error) {
 
-	rows, err := db_manager.User_db.Query("SELECT PostID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE UserID = ?", userID)
+	rows, err := repository.User_db.Query("SELECT PostID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE UserID = ?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +291,7 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 		if err != nil {
 			return nil, err
 		}
-		post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
+		post.Comment, err = repository.GetCommentsByPostID(post.PostID)
 		if err != nil {
 			return nil, err
 		}
@@ -263,7 +301,7 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 		return nil, err
 	}
 	for i := range posts {
-		rows, err = db_manager.User_db.Query("SELECT CategoryIDs, Title FROM Threads WHERE ThreadID = ?", posts[i].ThreadID)
+		rows, err = repository.User_db.Query("SELECT CategoryIDs, Title FROM Threads WHERE ThreadID = ?", posts[i].ThreadID)
 		if err != nil {
 			return nil, err
 		}
@@ -278,7 +316,7 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 			if err != nil {
 				return nil, err
 			}
-			categories, err := db_manager.ID2Category(category)
+			categories, err := repository.ID2Category(category)
 			if err != nil {
 				return nil, err
 			}
@@ -290,7 +328,7 @@ func fetchPostsByUserID(userID int) ([]models.Post, error) {
 }
 
 func fetchPostsByPostID(PostID int) (models.Post, error) {
-	rows, err := db_manager.User_db.Query("SELECT UserID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE PostID = ?", PostID)
+	rows, err := repository.User_db.Query("SELECT UserID, ThreadID, Content, Likes, Dislikes, CreatedAt FROM Posts WHERE PostID = ?", PostID)
 	if err != nil {
 		return models.Post{}, err
 	}
@@ -312,7 +350,7 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 	if err = rows.Err(); err != nil {
 		return models.Post{}, err
 	}
-	rows, err = db_manager.User_db.Query("SELECT CategoryIDs, Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
+	rows, err = repository.User_db.Query("SELECT CategoryIDs, Title FROM Threads WHERE ThreadID = ?", post.ThreadID)
 	if err != nil {
 		return models.Post{}, err
 	}
@@ -327,14 +365,14 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 		if err != nil {
 			return models.Post{}, err
 		}
-		categories, err := db_manager.ID2Category(category)
+		categories, err := repository.ID2Category(category)
 		if err != nil {
 			return models.Post{}, err
 		}
 		post.Categories = categories
 		post.Title = title
 	}
-	post.Comment, err = db_manager.GetCommentsByPostID(post.PostID)
+	post.Comment, err = repository.GetCommentsByPostID(post.PostID)
 	if err != nil {
 		return models.Post{}, err
 	}
@@ -342,7 +380,7 @@ func fetchPostsByPostID(PostID int) (models.Post, error) {
 }
 
 func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
-	rows, err := db_manager.User_db.Query("SELECT PostID FROM PostLikesDislikes WHERE UserID = ?", UserID)
+	rows, err := repository.User_db.Query("SELECT PostID FROM PostLikesDislikes WHERE UserID = ?", UserID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -356,14 +394,14 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 		var postID int
 		_ = rows.Scan(&postID)
 		post, _ = fetchPostsByPostID(postID)
-		post.Comment, err = db_manager.GetCommentsByPostID(postID)
+		post.Comment, err = repository.GetCommentsByPostID(postID)
 		fmt.Println(post.Comment)
 		if err != nil {
 			return nil, nil, err
 		}
 		posts = append(posts, post)
 	}
-	rows, err = db_manager.User_db.Query("SELECT CommentID FROM CommentLikesDislikes WHERE UserID = ?", UserID)
+	rows, err = repository.User_db.Query("SELECT CommentID FROM CommentLikesDislikes WHERE UserID = ?", UserID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -378,7 +416,7 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 			return nil, nil, err
 		}
 		post, _ = fetchPostsByPostID(postID)
-		post.Comment, err = db_manager.GetCommentsByPostID(postID)
+		post.Comment, err = repository.GetCommentsByPostID(postID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -389,7 +427,7 @@ func GetLikedDisliked(UserID int) ([]models.Post, []models.Post, error) {
 }
 
 func GetPostIDByCommentID(CommentID int) (int, error) {
-	rows, _ := db_manager.User_db.Query("SELECT PostID FROM Comments WHERE CommentID = ?", CommentID)
+	rows, _ := repository.User_db.Query("SELECT PostID FROM Comments WHERE CommentID = ?", CommentID)
 	defer rows.Close()
 
 	var postID int
@@ -399,9 +437,33 @@ func GetPostIDByCommentID(CommentID int) (int, error) {
 	fmt.Println(postID)
 	return postID, nil
 }
-func load_env() {
-	err := godotenv.Load()
+func load_env(data string) (string, error) {
+	env, err := godotenv.Read("config/.env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		return "", err
 	}
+	return env[data], nil
+}
+func CheckEmail(c *gin.Context) {
+	var email struct {
+		Email        string `json:"email" binding:"required"`
+		Device_Token string `json:"device_token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&email); err != nil {
+		fmt.Println("Reading error: ", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error(), "user": models.User{}})
+		return
+	}
+	if repository.CheckDeviceToken(email.Device_Token[:len(email.Device_Token)-8]) {
+		fmt.Println("Invalid Device Token")
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Device Token", "user": models.User{}})
+		return
+	}
+	user, err := repository.GetUserByEmail(email.Email)
+	if err != nil {
+		fmt.Println("User not found")
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error(), "user": models.User{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User founded", "user": user})
 }
